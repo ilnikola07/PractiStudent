@@ -37,7 +37,6 @@
             ClientSize = new Size(800, 450);
             Name = "FormMain";
             Text = "Абитуриент";
-            Load += this.FormMain_Load;
             ResumeLayout(false);
         }
 

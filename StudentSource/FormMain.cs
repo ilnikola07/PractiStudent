@@ -19,13 +19,13 @@ namespace PractiStudent
 
         private void ApplyUserPermissions()
         {            
-            if (currentUserRole == "Абитуриент") // Если вошел Абитуриент (Гость) — блокируем элементы управления
+            if (currentUserRole == "Абитуриент") // Если вошел гость — блокируем элементы управления
             {
                 this.Text = $"Главное окно (Режим просмотра: Абитуриент №{currentRegNumber})";
 
-                btnDelete.Enabled = false; // Отключаем кнопки модификации данных 
-                btnEdit.Enabled = false;
-                btnAdd.Enabled = false;
+                //btnDelete.Enabled = false; // Отключаем кнопки модификации данных 
+                //btnEdit.Enabled = false;
+                //btnAdd.Enabled = false;
 
                 // dataGridView1.ReadOnly = true; 
             }
