@@ -31,7 +31,6 @@ namespace PractiStudent
             InitializeComponent();
             _userService = new UserService();
 
-            // Базовые настройки формы (Нефункциональные требования: стиль, переносимость)
             this.Text = "Авторизация в системе";
             this.Size = new Size(400, 450);
             this.StartPosition = FormStartPosition.CenterScreen;
