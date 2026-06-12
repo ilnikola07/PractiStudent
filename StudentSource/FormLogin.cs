@@ -8,12 +8,23 @@ namespace PractiStudent
     public partial class FormLogin : Form
     {
         private readonly UserService _userService;
-                
+
         private Button btnRegisterGuest; // Изначальные элементы формы
         private Button btnLoginGuest;
         private Button btnLoginAdmin;
         private Button btnExit;
         private Label lblTitle;
+
+        private Panel panelInputContainer;
+        private Label lblFormActionTitle;
+        private TextBox txtLogin;
+        private TextBox txtPassword;
+        private TextBox txtConfirmPassword; // Только для регистрации
+        private Button btnSubmitAction;
+        private Button btnBackToMenu;
+
+
+        private string currentMode = ""; // Для отслеживания текущего режима формы
 
         protected override CreateParams CreateParams
         {
@@ -30,7 +41,7 @@ namespace PractiStudent
         {
             InitializeComponent();
             _userService = new UserService();
-
+            _userService.EnsureAdminCreated();
             this.Text = "Авторизация в системе";
             this.Size = new Size(400, 450);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -40,8 +51,9 @@ namespace PractiStudent
             this.BackColor = Color.FromArgb(245, 245, 245);
 
             InitializeCustomComponents();
+            InitializeDynamicInputPanel(); // Создаем скрытую панель ввода
         }
-        
+
         private Button CreateStyledButton(string text, Point location, Color backColor, EventHandler clickEvent) // Для создания кнопок в едином стиле
         {
             Button btn = new Button
@@ -60,7 +72,7 @@ namespace PractiStudent
         }
 
         private void InitializeCustomComponents()
-        {            
+        {
             lblTitle = new Label // Заголовок 
             {
                 Text = "Система \"Абитуриент\"\nВыберите действие",
@@ -70,10 +82,10 @@ namespace PractiStudent
                 Location = new Point(20, 30),
                 Size = new Size(345, 60)
             };
-            
+
             Color actionButtonColor = Color.FromArgb(230, 235, 240); // Цвет для кнопок 
             Color exitButtonColor = Color.FromArgb(245, 220, 220);
-                        
+
             btnRegisterGuest = CreateStyledButton("Зарегистрироваться как гость", new Point(50, 120), actionButtonColor, BtnRegisterGuest_Click); // Кнопки через универсальный метод
             btnLoginGuest = CreateStyledButton("Войти как гость", new Point(50, 180), actionButtonColor, BtnLoginGuest_Click);
             btnLoginAdmin = CreateStyledButton("Войти как администратор", new Point(50, 240), actionButtonColor, BtnLoginAdmin_Click);
@@ -82,24 +94,207 @@ namespace PractiStudent
             this.Controls.AddRange(new Control[] { lblTitle, btnRegisterGuest, btnLoginGuest, btnLoginAdmin, btnExit });
         }
 
+        // Метод инициализирует элементы управления для ввода данных (пока скрытые)
+        private void InitializeDynamicInputPanel()
+        {
+            panelInputContainer = new Panel
+            {
+                Location = new Point(20, 20),
+                Size = new Size(345, 370),
+                Visible = false // Изначально скрыта
+            };
+
+            lblFormActionTitle = new Label
+            {
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(45, 45, 45),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Location = new Point(0, 10),
+                Size = new Size(345, 30)
+            };
+
+            // Поля ввода и подсказки (Labels сделаем прямо перед TextBox для экономии места)
+            Label lblLogin = new Label { Text = "Логин:", Font = new Font("Segoe UI", 9), Location = new Point(30, 55), Size = new Size(280, 15) };
+            txtLogin = new TextBox { Font = new Font("Segoe UI", 11), Location = new Point(30, 75), Size = new Size(280, 25) };
+
+            Label lblPassword = new Label { Text = "Пароль:", Font = new Font("Segoe UI", 9), Location = new Point(30, 115), Size = new Size(280, 15) };
+            txtPassword = new TextBox { Font = new Font("Segoe UI", 11), Location = new Point(30, 135), Size = new Size(280, 25), UseSystemPasswordChar = true };
+
+            Label lblConfirmPassword = new Label { Name = "lblConfirmPassword", Text = "Повторите пароль:", Font = new Font("Segoe UI", 9), Location = new Point(30, 175), Size = new Size(280, 15) };
+            txtConfirmPassword = new TextBox { Name = "txtConfirmPassword", Font = new Font("Segoe UI", 11), Location = new Point(30, 195), Size = new Size(280, 25), UseSystemPasswordChar = true };
+
+            // Кнопки действия
+            Color submitColor = Color.FromArgb(220, 240, 220);
+            Color backColor = Color.FromArgb(240, 240, 240);
+
+            btnSubmitAction = CreateStyledButton("Подтвердить", new Point(30, 250), submitColor, BtnSubmitAction_Click);
+            btnBackToMenu = CreateStyledButton("Вернуться назад", new Point(30, 310), backColor, BtnBackToMenu_Click);
+
+            // Добавляем все элементы на панель
+            panelInputContainer.Controls.AddRange(new Control[] {
+                lblFormActionTitle, lblLogin, txtLogin, lblPassword, txtPassword,
+                lblConfirmPassword, txtConfirmPassword, btnSubmitAction, btnBackToMenu
+            });
+
+            this.Controls.Add(panelInputContainer);
+        }
+
+        // Переключение экранов: true — показать форму ввода, false — вернуть главное меню
+        private void ToggleFormScreen(bool showInputFields, string mode = "")
+        {
+            currentMode = mode;
+
+            // Управляем видимостью главного меню
+            lblTitle.Visible = !showInputFields;
+            btnRegisterGuest.Visible = !showInputFields;
+            btnLoginGuest.Visible = !showInputFields;
+            btnLoginAdmin.Visible = !showInputFields;
+            btnExit.Visible = !showInputFields;
+
+            // Очищаем поля при переключении
+            txtLogin.Clear();
+            txtPassword.Clear();
+            txtConfirmPassword.Clear();
+
+            if (showInputFields)
+            {
+                if (mode == "Register")
+                {
+                    lblFormActionTitle.Text = "Регистрация гостя";
+                    panelInputContainer.Controls["lblConfirmPassword"].Visible = true;
+                    txtConfirmPassword.Visible = true;
+                    btnSubmitAction.Location = new Point(30, 250); // Возвращаем кнопку вниз
+                }
+                else
+                {
+                    lblFormActionTitle.Text = mode == "LoginAdmin" ? "Вход для администратора" : "Вход в систему";
+                    panelInputContainer.Controls["lblConfirmPassword"].Visible = false;
+                    txtConfirmPassword.Visible = false;
+                    btnSubmitAction.Location = new Point(30, 185); // Сдвигаем кнопку выше, так как нет третьего поля
+                }
+
+                panelInputContainer.Visible = true;
+            }
+            else
+            {
+                panelInputContainer.Visible = false;
+            }
+        }
+
         private void BtnRegisterGuest_Click(object? sender, EventArgs e)
         {
-            // Здесь будет логика для регистрации гостя
+            ToggleFormScreen(true, "Register");
         }
 
         private void BtnLoginGuest_Click(object? sender, EventArgs e)
         {
-            // Здесь будет логика для входа гостя
+            ToggleFormScreen(true, "LoginGuest");
         }
 
         private void BtnLoginAdmin_Click(object? sender, EventArgs e)
         {
-            // Здесь будет логика для входа админа
+            ToggleFormScreen(true, "LoginAdmin");
         }
 
         private void BtnExit_Click(object? sender, EventArgs e)
         {
             Application.Exit();
         }
+
+        private void BtnBackToMenu_Click(object? sender, EventArgs e)
+        {
+            ToggleFormScreen(false);
+        }
+
+        private void BtnSubmitAction_Click(object? sender, EventArgs e)
+        {
+            string login = txtLogin.Text.Trim();
+            string password = txtPassword.Text.Trim();
+
+            // ВАЛИДАЦИЯ
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+            {
+                MessageBox.Show("Пожалуйста, заполните все поля!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // РЕЖИМ РЕГИСТРАЦИИ ГОСТЯ
+            if (currentMode == "Register")
+            {
+                string confirmPassword = txtConfirmPassword.Text.Trim();
+                if (password != confirmPassword)
+                {
+                    MessageBox.Show("Пароли не совпадают!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                try
+                {
+                    // Логик для записи в БД
+                    if (_userService.RegisterGuest(login, password))
+                    {
+                        MessageBox.Show($"Регистрация гостя '{login}' успешна!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ToggleFormScreen(false); 
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка регистрации", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
+            // РЕЖИМ ВХОДА ДЛЯ ГОСТЯ
+            else if (currentMode == "LoginGuest")
+            {
+                try
+                {
+                    // Проверка логина/пароля с ожидаемой ролью гость
+                    string role = _userService.ValidateUser(login, password, "Гость");
+
+                    if (role != null)
+                    {
+                        MessageBox.Show("Вы успешно вошли как гость!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Hide(); // Прячем форму логина
+                        FormMain mainForm = new FormMain(role, null); // Создаем главную форму (роль, regNumber = null)
+                        mainForm.ShowDialog(); 
+                        this.Close(); 
+                    }
+                    else
+                    {
+                        MessageBox.Show("Неверный логин или пароль для гостя!", "Ошибка авторизации", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Системный сбой", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            // РЕЖИМ ВХОДА ДЛЯ АДМИНИСТРАТОРА
+            else if (currentMode == "LoginAdmin")
+            {
+                try
+                {
+                    // Проверка логина/пароля с ожидаемой ролью администратор
+                    string role = _userService.ValidateUser(login, password, "Администратор");
+
+                    if (role != null)
+                    {
+                        MessageBox.Show("Вы успешно вошли как администратор!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Hide(); 
+                        FormMain mainForm = new FormMain(role, null); 
+                        mainForm.ShowDialog();
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Доступ отклонен. Неверный логин или пароль администратора!", "Ошибка авторизации", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Системный сбой", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
     }
 }

@@ -1,7 +1,96 @@
-﻿namespace Logic
+﻿using System.Data.OleDb;
+using PractiStudent.Data; // Подключение слоя данных
+
+namespace Logic
 {
     public class UserService
     {
+        private readonly DatabaseHelper _dbHelper;
 
+        public UserService()
+        {
+            _dbHelper = new DatabaseHelper();
+        }
+
+        public void EnsureAdminCreated()
+        {
+            try
+            {
+                string adminLogin = "admin";
+
+                if (!IsLoginExists(adminLogin))
+                {
+                    string passwordHash = SecurityHelper.ComputeSha256Hash("admin123");
+
+                    string query = "INSERT INTO Пользователи (Логин, Хэш_Пароля, Роль) VALUES (?, ?, ?)";
+
+                    OleDbParameter[] parameters = new OleDbParameter[]
+                    {
+                new OleDbParameter("?", adminLogin),
+                new OleDbParameter("?", passwordHash),
+                new OleDbParameter("?", "Администратор")
+                    };
+
+                    _dbHelper.ExecuteNonQuery(query, parameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка создания админа: {ex.Message}");
+            }
+        }
+
+        // МЕТОД РЕГИСТРАЦИИ ГОСТЯ
+        public bool RegisterGuest(string login, string password)
+        {
+            if (IsLoginExists(login))
+            {
+                throw new Exception("Пользователь с таким логином уже существует!");
+            }
+
+            string passwordHash = SecurityHelper.ComputeSha256Hash(password);
+            string query = "INSERT INTO Пользователи (Логин, Хэш_Пароля, Роль) VALUES (@login, @hash, @role)";
+
+            OleDbParameter[] parameters = new OleDbParameter[]
+            {
+                new OleDbParameter("@login", login),
+                new OleDbParameter("@hash", passwordHash),
+                new OleDbParameter("@role", "Гость")
+            };
+
+            int rows = _dbHelper.ExecuteNonQuery(query, parameters);
+            return rows > 0;
+        }
+
+        // МЕТОД ВХОДА В СИСТЕМУ
+        public string ValidateUser(string login, string password, string expectedRole)
+        {
+            string passwordHash = SecurityHelper.ComputeSha256Hash(password);
+
+            string query = "SELECT Роль FROM Пользователи WHERE Логин = ? AND Хэш_Пароля = ? AND Роль = ?";
+
+            OleDbParameter[] parameters = new OleDbParameter[]
+            {
+        new OleDbParameter("?", login),
+        new OleDbParameter("?", passwordHash),
+        new OleDbParameter("?", expectedRole)
+            };
+
+            object result = _dbHelper.ExecuteScalar(query, parameters);
+            return result?.ToString();
+        }
+
+        // МЕТОД ПРОВЕРКИ УНИКАЛЬНОСТИ
+        private bool IsLoginExists(string login)
+        {
+            string query = "SELECT COUNT(*) FROM Пользователи WHERE Логин = ?";
+            OleDbParameter[] parameters = new OleDbParameter[]
+            {
+        new OleDbParameter("?", login)
+            };
+
+            int count = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
+            return count > 0;
+        }
     }
 }

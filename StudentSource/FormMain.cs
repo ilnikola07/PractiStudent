@@ -19,9 +19,9 @@ namespace PractiStudent
 
         private void ApplyUserPermissions()
         {            
-            if (currentUserRole == "Абитуриент") // Если вошел гость — блокируем элементы управления
+            if (currentUserRole == "Гость") // Если вошел гость — блокируем элементы управления
             {
-                this.Text = $"Главное окно (Режим просмотра: Абитуриент №{currentRegNumber})";
+                this.Text = $"Главное окно (Режим просмотра: гость)";
 
                 //btnDelete.Enabled = false; // Отключаем кнопки модификации данных 
                 //btnEdit.Enabled = false;
