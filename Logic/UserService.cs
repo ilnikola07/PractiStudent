@@ -1,16 +1,37 @@
 ﻿using System.Data.OleDb;
-using PractiStudent.Data; // Подключение слоя данных
+using PractiStudent.Data;
 
 namespace Logic
 {
     public class UserService
     {
         private readonly DatabaseHelper _dbHelper;
+        private bool _isConnected = false;
 
         public UserService()
         {
             _dbHelper = new DatabaseHelper();
         }
+
+        // Метод для подключения к выбранной базе данных
+        public bool ConnectToDatabase(string filePath)
+        {
+            _isConnected = _dbHelper.SetDatabaseConnection(filePath);
+
+            if (_isConnected)
+            {
+                EnsureAdminCreated();
+            }
+
+            return _isConnected;
+        }
+
+        public string GetDatabaseFileName()
+        {
+            return _dbHelper.DatabaseFileName;
+        }
+
+        public bool IsConnected() => _isConnected;
 
         public void EnsureAdminCreated()
         {
@@ -26,9 +47,9 @@ namespace Logic
 
                     OleDbParameter[] parameters = new OleDbParameter[]
                     {
-                new OleDbParameter("?", adminLogin),
-                new OleDbParameter("?", passwordHash),
-                new OleDbParameter("?", "Администратор")
+                        new OleDbParameter("?", adminLogin),
+                        new OleDbParameter("?", passwordHash),
+                        new OleDbParameter("?", "Администратор")
                     };
 
                     _dbHelper.ExecuteNonQuery(query, parameters);
@@ -40,7 +61,6 @@ namespace Logic
             }
         }
 
-        // МЕТОД РЕГИСТРАЦИИ ГОСТЯ
         public bool RegisterGuest(string login, string password)
         {
             if (IsLoginExists(login))
@@ -62,7 +82,6 @@ namespace Logic
             return rows > 0;
         }
 
-        // МЕТОД ВХОДА В СИСТЕМУ
         public string ValidateUser(string login, string password, string expectedRole)
         {
             string passwordHash = SecurityHelper.ComputeSha256Hash(password);
@@ -71,22 +90,21 @@ namespace Logic
 
             OleDbParameter[] parameters = new OleDbParameter[]
             {
-        new OleDbParameter("?", login),
-        new OleDbParameter("?", passwordHash),
-        new OleDbParameter("?", expectedRole)
+                new OleDbParameter("?", login),
+                new OleDbParameter("?", passwordHash),
+                new OleDbParameter("?", expectedRole)
             };
 
             object result = _dbHelper.ExecuteScalar(query, parameters);
             return result?.ToString();
         }
 
-        // МЕТОД ПРОВЕРКИ УНИКАЛЬНОСТИ
         private bool IsLoginExists(string login)
         {
             string query = "SELECT COUNT(*) FROM Пользователи WHERE Логин = ?";
             OleDbParameter[] parameters = new OleDbParameter[]
             {
-        new OleDbParameter("?", login)
+                new OleDbParameter("?", login)
             };
 
             int count = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));

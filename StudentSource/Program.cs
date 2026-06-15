@@ -10,7 +10,11 @@ namespace PractiStudent
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormLogin()); // Первой запускается форма авторизации
+
+            FormLogin loginForm = new FormLogin();
+            Application.Run(loginForm); // FormLogin теперь главная форма приложения
+
+            //Application.Run(new FormLogin()); // Первой запускается форма авторизации
         }
     }
 }
