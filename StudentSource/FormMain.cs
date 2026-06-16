@@ -20,8 +20,6 @@ namespace PractiStudent
 
         private readonly DatabaseHelper _dbHelper;
 
-        private SplitContainer splitContainer;
-        private DataGridView dataGridView;
         private ComboBox cmbTables;
         private Label lblTableSelect;
         private Label lblConnectionInfo;
@@ -72,28 +70,16 @@ namespace PractiStudent
             this.MinimizeBox = false;
             this.BackColor = Color.FromArgb(245, 245, 245);
 
-            InitializeLayout();
+            // Настройка DataGridView - прокрутка
+            dataGridViewMain.ScrollBars = ScrollBars.Both;
+            dataGridViewMain.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
             InitializeConnectionIndicator();
-            InitializeDataGridView();
             InitializeLeftPanel();
             CreateAllActionPanels();
 
             ShowPanel(panelMainMenu);
             LoadTablesIntoComboBox();
-        }
-
-        private void InitializeLayout()
-        {
-            splitContainer = new SplitContainer
-            {
-                Dock = DockStyle.Fill,
-                Orientation = Orientation.Vertical,
-                SplitterDistance = 400,
-                BackColor = Color.FromArgb(245, 245, 245),
-                IsSplitterFixed = true
-            };
-
-            this.Controls.Add(splitContainer);
         }
 
         private void InitializeConnectionIndicator()
@@ -107,48 +93,8 @@ namespace PractiStudent
                 Size = new Size(380, 20),
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            splitContainer.Panel1.Controls.Add(lblConnectionInfo);
+            splitContainer1.Panel1.Controls.Add(lblConnectionInfo);
             lblConnectionInfo.BringToFront();
-        }
-
-        private void InitializeDataGridView()
-        {
-            dataGridView = new DataGridView
-            {
-                Location = new Point(10, 10),
-                Size = new Size(770, 640),
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                BackgroundColor = Color.White,
-                RowHeadersVisible = false,
-                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.FromArgb(230, 235, 240),
-                    ForeColor = Color.FromArgb(45, 45, 45),
-                    Font = new Font("Segoe UI", 9, FontStyle.Bold)
-                },
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.White,
-                    ForeColor = Color.FromArgb(45, 45, 45),
-                    Font = new Font("Segoe UI", 9)
-                },
-                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.FromArgb(248, 248, 248)
-                },
-                GridColor = Color.FromArgb(220, 220, 220),
-                BorderStyle = BorderStyle.None
-            };
-
-            dataGridView.EnableHeadersVisualStyles = false;
-            dataGridView.Margin = new Padding(10);
-
-            splitContainer.Panel2.Controls.Add(dataGridView);
         }
 
         private void InitializeLeftPanel()
@@ -171,8 +117,8 @@ namespace PractiStudent
             };
             cmbTables.SelectedIndexChanged += CmbTables_SelectedIndexChanged;
 
-            splitContainer.Panel1.Controls.Add(lblTableSelect);
-            splitContainer.Panel1.Controls.Add(cmbTables);
+            splitContainer1.Panel1.Controls.Add(lblTableSelect);
+            splitContainer1.Panel1.Controls.Add(cmbTables);
         }
 
         private void LoadTablesIntoComboBox()
@@ -181,13 +127,21 @@ namespace PractiStudent
             {
                 List<string> tables = _dbHelper.GetTableNames();
                 cmbTables.Items.Clear();
+
                 foreach (string table in tables)
                 {
                     if (table.Equals("Пользователи", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (currentUserRole == "Администратор")
+                        {
+                            cmbTables.Items.Add(table);
+                        }
                         continue;
+                    }
 
                     cmbTables.Items.Add(table);
                 }
+
                 if (cmbTables.Items.Count > 0)
                 {
                     cmbTables.SelectedIndex = 0;
@@ -221,7 +175,7 @@ namespace PractiStudent
             try
             {
                 currentData = _dbHelper.GetAllData(currentTableName);
-                dataGridView.DataSource = currentData;
+                dataGridViewMain.DataSource = currentData;
 
                 if (currentData.Columns.Count > 0)
                 {
@@ -277,7 +231,7 @@ namespace PractiStudent
                 Visible = false,
                 BackColor = Color.FromArgb(245, 245, 245)
             };
-            splitContainer.Panel1.Controls.Add(panel);
+            splitContainer1.Panel1.Controls.Add(panel);
             return panel;
         }
 
@@ -485,7 +439,7 @@ namespace PractiStudent
 
         private void ShowPanel(Panel panelToShow)
         {
-            foreach (Control ctrl in splitContainer.Panel1.Controls)
+            foreach (Control ctrl in splitContainer1.Panel1.Controls)
             {
                 if (ctrl is Panel p && p != panelToShow)
                 {
@@ -516,7 +470,7 @@ namespace PractiStudent
             {
                 List<string> columns = _dbHelper.GetColumnNames(currentTableName);
 
-                foreach (Control ctrl in splitContainer.Panel1.Controls)
+                foreach (Control ctrl in splitContainer1.Panel1.Controls)
                 {
                     if (ctrl is Panel panel)
                     {
@@ -602,14 +556,14 @@ namespace PractiStudent
         private void BtnEdit_Click(object sender, EventArgs e)
         {
             if (!CheckTableSelected()) return;
-            if (dataGridView.CurrentRow == null)
+            if (dataGridViewMain.CurrentRow == null)
             {
                 MessageBox.Show("Выберите запись для редактирования!", "Внимание",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             ShowPanel(panelEdit);
-            CreateDynamicForm(panelEdit, dataGridView.CurrentRow, false);
+            CreateDynamicForm(panelEdit, dataGridViewMain.CurrentRow, false);
         }
 
         private void BtnDelete_Click(object sender, EventArgs e)
@@ -655,7 +609,7 @@ namespace PractiStudent
             try
             {
                 currentData = _dbHelper.SearchData(currentTableName, cmbColumn.SelectedItem.ToString(), txtValue.Text.Trim());
-                dataGridView.DataSource = currentData;
+                dataGridViewMain.DataSource = currentData;
             }
             catch (Exception ex)
             {
@@ -680,7 +634,7 @@ namespace PractiStudent
             try
             {
                 currentData = _dbHelper.FilterData(currentTableName, cmbColumn.SelectedItem.ToString(), cmbValue.SelectedItem.ToString());
-                dataGridView.DataSource = currentData;
+                dataGridViewMain.DataSource = currentData;
             }
             catch (Exception ex)
             {
@@ -702,7 +656,7 @@ namespace PractiStudent
             try
             {
                 currentData = _dbHelper.SortData(currentTableName, cmbColumn.SelectedItem.ToString(), true);
-                dataGridView.DataSource = currentData;
+                dataGridViewMain.DataSource = currentData;
             }
             catch (Exception ex)
             {
@@ -724,7 +678,7 @@ namespace PractiStudent
             try
             {
                 currentData = _dbHelper.SortData(currentTableName, cmbColumn.SelectedItem.ToString(), false);
-                dataGridView.DataSource = currentData;
+                dataGridViewMain.DataSource = currentData;
             }
             catch (Exception ex)
             {
@@ -738,11 +692,82 @@ namespace PractiStudent
             LoadTableData();
         }
 
+        // Определяем AutoNumber поля (ID, Регистрационный_номер и т.д.)
+        // Жёстко задаём AutoNumber поля для каждой таблицы
+        private List<string> GetAutoNumberColumns()
+        {
+            var autoNumberColumns = new List<string>();
+
+            switch (currentTableName)
+            {
+                case "Пользователи":
+                    autoNumberColumns.Add("ID");
+                    break;
+                case "Абитуриент":
+                    autoNumberColumns.Add("Регистрационный_номер");
+                    break;
+                //case "Что_окончил":
+                //    autoNumberColumns.Add("Код_учебного_заведения");
+                //    break;
+                case "Факультет":
+                    autoNumberColumns.Add("Код_факультета");
+                    break;
+                case "Специальность":
+                    autoNumberColumns.Add("Код_специальности");
+                    break;
+                case "Специализация":
+                    autoNumberColumns.Add("Код_специализации");
+                    break;
+            }
+
+            return autoNumberColumns;
+        }
+
+        // Определяем поля с вариантами Да/Нет
+        private List<string> GetYesNoFields()
+        {
+            var yesNoFields = new List<string>();
+
+            if (currentTableName == "Абитуриент")
+            {
+                yesNoFields.Add("Наличие_медали");
+            }
+
+            return yesNoFields;
+        }
+
+        private Dictionary<string, string> GetForeignKeyMappings()
+        {
+            var fkMappings = new Dictionary<string, string>();
+
+            // Жёстко задаём связи на основе схемы БД
+            if (currentTableName == "Абитуриент")
+            {
+                fkMappings["Код_учебного_заведения"] = "Что_окончил";
+                fkMappings["Код_специализации"] = "Специализация";
+            }
+            else if (currentTableName == "Специализация")
+            {
+                fkMappings["Код_специальности"] = "Специальность";
+            }
+            else if (currentTableName == "Специальность")
+            {
+                fkMappings["Код_факультета"] = "Факультет";
+            }
+
+            return fkMappings;
+        }
+
+
         private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd)
         {
             panel.Controls.Clear();
 
             List<string> columns = _dbHelper.GetColumnNames(currentTableName);
+            var autoNumberColumns = GetAutoNumberColumns();
+            var fkMappings = GetForeignKeyMappings();
+            var yesNoFields = GetYesNoFields();
+
             int y = 5;
 
             if (isAdd)
@@ -757,27 +782,155 @@ namespace PractiStudent
             }
 
             Dictionary<string, TextBox> textBoxes = new Dictionary<string, TextBox>();
+            Dictionary<string, ComboBox> comboBoxes = new Dictionary<string, ComboBox>();
 
             foreach (string col in columns)
             {
+                bool isAutoNumber = autoNumberColumns.Contains(col);
+                bool isForeignKey = fkMappings.ContainsKey(col);
+                bool isYesNo = yesNoFields.Contains(col);
+
                 panel.Controls.Add(CreateLabel(col + ":", new Point(0, y)));
                 y += 20;
 
-                TextBox txt = CreateTextBox(new Point(0, y));
-                txt.Name = "txt_" + col;
-
-                if (!isAdd && row != null)
+                if (isAutoNumber)
                 {
-                    txt.Text = row.Cells[col].Value?.ToString() ?? "";
+                    // AutoNumber - только для чтения
+                    TextBox txt = CreateTextBox(new Point(0, y));
+                    txt.Name = "txt_" + col;
+                    txt.ReadOnly = true;
+                    txt.BackColor = Color.FromArgb(240, 240, 240);
+
+                    if (!isAdd && row != null)
+                    {
+                        txt.Text = row.Cells[col].Value?.ToString() ?? "";
+                    }
+                    else
+                    {
+                        txt.Text = "(автоматически)";
+                    }
+
+                    textBoxes[col] = txt;
+                    panel.Controls.Add(txt);
+                }
+                else if (isYesNo)
+                {
+                    // Поле Да/Нет - ComboBox с двумя вариантами
+                    ComboBox cmb = CreateComboBox(new Point(0, y));
+                    cmb.Name = "cmb_" + col;
+                    cmb.Items.Add("да");
+                    cmb.Items.Add("нет");
+
+                    // Устанавливаем текущее значение при редактировании
+                    if (!isAdd && row != null && row.Cells[col].Value != null)
+                    {
+                        string currentValue = row.Cells[col].Value.ToString().ToLower();
+                        if (currentValue == "да" || currentValue == "нет")
+                        {
+                            cmb.SelectedItem = currentValue;
+                        }
+                        else
+                        {
+                            cmb.SelectedIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        cmb.SelectedIndex = 0;
+                    }
+
+                    comboBoxes[col] = cmb;
+                    panel.Controls.Add(cmb);
+                }
+                else if (isForeignKey)
+                {
+                    // Foreign Key - ComboBox со значениями из связанной таблицы
+                    ComboBox cmb = CreateComboBox(new Point(0, y));
+                    cmb.Name = "cmb_" + col;
+
+                    try
+                    {
+                        string relatedTable = fkMappings[col];
+                        var relatedData = _dbHelper.GetAllData(relatedTable);
+
+                        if (relatedData.Columns.Count >= 2)
+                        {
+                            string codeColumn = relatedData.Columns[0].ColumnName;
+                            string nameColumn = relatedData.Columns[1].ColumnName;
+
+                            cmb.Items.Add("(не выбрано)");
+
+                            foreach (DataRow relatedRow in relatedData.Rows)
+                            {
+                                string code = relatedRow[codeColumn].ToString();
+                                string name = relatedRow[nameColumn].ToString();
+                                string display = $"{code} - {name}";
+
+                                cmb.Items.Add(display);
+                            }
+
+                            if (!isAdd && row != null && row.Cells[col].Value != null)
+                            {
+                                string currentValue = row.Cells[col].Value.ToString();
+                                foreach (string item in cmb.Items)
+                                {
+                                    if (item.StartsWith(currentValue + " -"))
+                                    {
+                                        cmb.SelectedItem = item;
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                cmb.SelectedIndex = 0;
+                            }
+                        }
+                        else
+                        {
+                            TextBox txt = CreateTextBox(new Point(0, y));
+                            txt.Name = "txt_" + col;
+                            txt.Text = (!isAdd && row != null) ? row.Cells[col].Value?.ToString() ?? "" : "";
+                            textBoxes[col] = txt;
+                            panel.Controls.Add(txt);
+                            y += 35;
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        TextBox txt = CreateTextBox(new Point(0, y));
+                        txt.Name = "txt_" + col;
+                        txt.Text = (!isAdd && row != null) ? row.Cells[col].Value?.ToString() ?? "" : "";
+                        textBoxes[col] = txt;
+                        panel.Controls.Add(txt);
+                        y += 35;
+                        continue;
+                    }
+
+                    comboBoxes[col] = cmb;
+                    panel.Controls.Add(cmb);
+                }
+                else
+                {
+                    // Обычное поле - TextBox
+                    TextBox txt = CreateTextBox(new Point(0, y));
+                    txt.Name = "txt_" + col;
+
+                    if (!isAdd && row != null)
+                    {
+                        txt.Text = row.Cells[col].Value?.ToString() ?? "";
+                    }
+
+                    textBoxes[col] = txt;
+                    panel.Controls.Add(txt);
                 }
 
-                textBoxes[col] = txt;
-                panel.Controls.Add(txt);
                 y += 35;
             }
 
             Button btnSubmit = CreateButton(isAdd ? "Добавить" : "Сохранить", new Point(0, y + 10),
-                Color.FromArgb(220, 240, 220), (s, ev) => BtnSubmitDynamic_Click(s, ev, textBoxes, isAdd, row));
+                Color.FromArgb(220, 240, 220), (s, ev) => BtnSubmitDynamic_Click(s, ev, textBoxes, comboBoxes, isAdd, row));
             panel.Controls.Add(btnSubmit);
 
             Button btnBack = CreateButton("Вернуться назад", new Point(0, y + 60),
@@ -786,15 +939,59 @@ namespace PractiStudent
         }
 
         private void BtnSubmitDynamic_Click(object sender, EventArgs e,
-            Dictionary<string, TextBox> textBoxes, bool isAdd, DataGridViewRow row)
+     Dictionary<string, TextBox> textBoxes,
+     Dictionary<string, ComboBox> comboBoxes,
+     bool isAdd, DataGridViewRow row)
         {
             try
             {
                 Dictionary<string, object> values = new Dictionary<string, object>();
+                var autoNumberColumns = GetAutoNumberColumns();
+                var yesNoFields = GetYesNoFields();
+
+                // Обрабатываем TextBox поля
                 foreach (var kvp in textBoxes)
                 {
+                    string fieldName = kvp.Key;
                     string val = kvp.Value.Text.Trim();
-                    values[kvp.Key] = string.IsNullOrEmpty(val) ? DBNull.Value : (object)val;
+
+                    if (isAdd && autoNumberColumns.Contains(fieldName))
+                    {
+                        continue;
+                    }
+
+                    values[fieldName] = string.IsNullOrEmpty(val) ? DBNull.Value : (object)val;
+                }
+
+                // Обрабатываем ComboBox поля
+                foreach (var kvp in comboBoxes)
+                {
+                    string fieldName = kvp.Key;
+                    ComboBox cmb = kvp.Value;
+
+                    if (yesNoFields.Contains(fieldName))
+                    {
+                        // Для полей Да/Нет сохраняем выбранное значение как есть
+                        if (cmb.SelectedItem != null)
+                        {
+                            values[fieldName] = cmb.SelectedItem.ToString();
+                        }
+                        else
+                        {
+                            values[fieldName] = "нет"; // по умолчанию
+                        }
+                    }
+                    else if (cmb.SelectedIndex <= 0) // "(не выбрано)" для FK
+                    {
+                        values[fieldName] = DBNull.Value;
+                    }
+                    else
+                    {
+                        // Для FK извлекаем код из строки "1 - Название"
+                        string selectedText = cmb.SelectedItem.ToString();
+                        string code = selectedText.Split(new[] { " - " }, StringSplitOptions.None)[0];
+                        values[fieldName] = code;
+                    }
                 }
 
                 if (isAdd)
@@ -824,7 +1021,7 @@ namespace PractiStudent
 
         private void BtnDoDelete_Click(object sender, EventArgs e)
         {
-            if (dataGridView.CurrentRow == null)
+            if (dataGridViewMain.CurrentRow == null)
             {
                 MessageBox.Show("Выберите запись для удаления!", "Внимание",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -838,7 +1035,7 @@ namespace PractiStudent
             {
                 try
                 {
-                    object keyValue = dataGridView.CurrentRow.Cells[primaryKeyColumn].Value;
+                    object keyValue = dataGridViewMain.CurrentRow.Cells[primaryKeyColumn].Value;
                     _dbHelper.DeleteRecord(currentTableName, primaryKeyColumn, keyValue);
                     MessageBox.Show("Запись удалена!", "Успех",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);

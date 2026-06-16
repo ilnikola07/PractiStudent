@@ -206,7 +206,7 @@ namespace PractiStudent
             btnExitInitial.Visible = false;
 
             lblConnectionStatus.Visible = true;
-            lblConnectionStatus.Text = $"✓ Работа с базой \"{_userService.GetDatabaseFileName()}\"";
+            lblConnectionStatus.Text = $" Подключение: \"{_userService.GetDatabaseFileName()}\"";
             lblConnectionStatus.Location = new Point(10, 8);
             lblConnectionStatus.Size = new Size(380, 30);
 

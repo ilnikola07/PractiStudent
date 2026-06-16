@@ -246,5 +246,49 @@ namespace PractiStudent.Data
                 }
             }
         }
+
+        public void DeleteWithCascade(string tableName, string keyColumn, object keyValue,
+    Dictionary<string, string> relatedTables)
+        {
+            using (OleDbConnection conn = new OleDbConnection(_connectionString))
+            {
+                conn.Open();
+                using (OleDbTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // Сначала удаляем связанные записи
+                        foreach (var related in relatedTables)
+                        {
+                            string relatedTable = related.Key;
+                            string foreignKey = related.Value;
+                            string query = $"DELETE FROM [{relatedTable}] WHERE [{foreignKey}] = ?";
+                            using (OleDbCommand cmd = new OleDbCommand(query, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@p1", keyValue);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // Затем основную запись
+                        string mainQuery = $"DELETE FROM [{tableName}] WHERE [{keyColumn}] = ?";
+                        using (OleDbCommand cmd = new OleDbCommand(mainQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@p1", keyValue);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+
     }
 }
