@@ -1,7 +1,5 @@
 ﻿using Logic;
-using System;
-using System.Drawing;
-using System.Windows.Forms;
+using StudentSource;
 
 namespace PractiStudent
 {
@@ -10,56 +8,47 @@ namespace PractiStudent
         private readonly UserService _userService;
         private bool _isDatabaseConnected = false;
 
-        private Button btnConnectDatabase;
-        private Button btnExitInitial;
-        private Label lblInitialTitle;
-        private Label lblConnectionStatus;
-
-        private Button btnRegisterGuest;
-        private Button btnLoginGuest;
-        private Button btnLoginAdmin;
-        private Button btnExit;
-        private Label lblTitle;
-
+        private Button btnConnectDatabase, btnExitInitial, btnRegisterGuest, btnLoginGuest, btnLoginAdmin, btnExit;
+        private Label lblInitialTitle, lblConnectionStatus, lblTitle, lblFormActionTitle;
         private Panel panelInputContainer;
-        private Label lblFormActionTitle;
-        private TextBox txtLogin;
-        private TextBox txtPassword;
-        private TextBox txtConfirmPassword;
-        private Button btnSubmitAction;
-        private Button btnBackToMenu;
+        private TextBox txtLogin, txtPassword, txtConfirmPassword;
+        private Button btnSubmitAction, btnBackToMenu;
 
         private string currentMode = "";
-
-        protected override CreateParams CreateParams
+        protected override CreateParams CreateParams // Переопределние свойств создания окна
         {
             get
             {
                 CreateParams cp = base.CreateParams;
-                const int CS_NOCLOSE = 0x200;
+                const int CS_NOCLOSE = 0x200; // Убрать кнопку закрытия формы
                 cp.ClassStyle |= CS_NOCLOSE;
                 return cp;
             }
         }
-
-        public FormLogin()
+        public FormLogin() // Инициализация формы и всего сопутствующего
         {
             InitializeComponent();
-            _userService = new UserService();
+            _userService = new UserService(); 
+            ConfigureForm(); // Внешний вид
+            InitializeAllComponents(); 
+            ShowConnectionScreen(); // Для показа самой 1 вариации
+        }
+        private void ConfigureForm()
+        {
+            this.Text = UIStyles.LoginFormTitle; // Вся косметика ставится в классе UIStyles
+            this.Size = UIStyles.FormSize;
+            this.StartPosition = UIStyles.DefaultFormStartPosition;
+            this.FormBorderStyle = UIStyles.DefaultBorderStyle;
+            this.MaximizeBox = UIStyles.AllowMaximize;
+            this.MinimizeBox = UIStyles.AllowMinimize;
+            this.BackColor = UIStyles.Background;
+        }
 
-            this.Text = "Авторизация в системе";
-            this.Size = new Size(400, 450);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(245, 245, 245);
-
-            InitializeConnectionScreen();
-            InitializeCustomComponents();
-            InitializeDynamicInputPanel();
-
-            ShowConnectionScreen();
+        private void InitializeAllComponents()
+        {
+            InitializeConnectionScreen(); // Требуется подключение
+            InitializeCustomComponents(); // Выбор под кем войти
+            InitializeDynamicInputPanel(); // Ввод логина и пароля
         }
 
         private Button CreateStyledButton(string text, Point location, Color backColor, EventHandler clickEvent)
@@ -67,9 +56,9 @@ namespace PractiStudent
             Button btn = new Button
             {
                 Text = text,
-                Font = new Font("Segoe UI", 10),
+                Font = UIStyles.ButtonFont,
                 Location = location,
-                Size = new Size(280, 45),
+                Size = UIStyles.ButtonSize,
                 BackColor = backColor,
                 FlatStyle = FlatStyle.Flat
             };
@@ -82,28 +71,27 @@ namespace PractiStudent
         {
             lblInitialTitle = new Label
             {
-                Text = "Система \"Абитуриент\"\n\nТребуется подключение\nк базе данных",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(45, 45, 45),
+                Text = $"{UIStyles.DatabaseRequiredTitle}\n\n{UIStyles.DatabaseRequiredMessage}",
+                Font = UIStyles.TitleFont,
+                ForeColor = UIStyles.TextColor,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(20, 80),
-                Size = new Size(345, 100)
+                Location = UIStyles.InitialTitlePosition,
+                Size = UIStyles.InitialTitleSize
             };
 
-            Color connectButtonColor = Color.FromArgb(230, 235, 240);
-            Color exitButtonColor = Color.FromArgb(245, 220, 220);
-
-            btnConnectDatabase = CreateStyledButton("Подключиться к БД", new Point(50, 210), connectButtonColor, BtnConnectDatabase_Click);
-            btnExitInitial = CreateStyledButton("Выйти из приложения", new Point(50, 310), exitButtonColor, BtnExit_Click);
+            btnConnectDatabase = CreateStyledButton("Подключиться к БД", UIStyles.ButtonConnectPosition,
+                UIStyles.PrimaryButton, BtnConnectDatabase_Click);
+            btnExitInitial = CreateStyledButton("Выйти из приложения", UIStyles.ButtonExitInitialPosition,
+                UIStyles.DangerButton, BtnExit_Click);
 
             lblConnectionStatus = new Label
             {
                 Text = "",
-                Font = new Font("Segoe UI", 8),
-                ForeColor = Color.FromArgb(45, 45, 45),
+                Font = UIStyles.HintFont,
+                ForeColor = UIStyles.TextColor,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Location = new Point(10, 8),
-                Size = new Size(380, 30),
+                Location = UIStyles.ConnectionStatusPosition,
+                Size = UIStyles.ConnectionStatusSize,
                 Visible = false
             };
 
@@ -115,20 +103,17 @@ namespace PractiStudent
             lblTitle = new Label
             {
                 Text = "Система \"Абитуриент\"\nВыберите действие",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(45, 45, 45),
+                Font = UIStyles.TitleFont,
+                ForeColor = UIStyles.TextColor,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Location = new Point(20, 30),
                 Size = new Size(345, 60)
             };
 
-            Color actionButtonColor = Color.FromArgb(230, 235, 240);
-            Color exitButtonColor = Color.FromArgb(245, 220, 220);
-
-            btnRegisterGuest = CreateStyledButton("Зарегистрироваться как гость", new Point(50, 120), actionButtonColor, BtnRegisterGuest_Click);
-            btnLoginGuest = CreateStyledButton("Войти как гость", new Point(50, 180), actionButtonColor, BtnLoginGuest_Click);
-            btnLoginAdmin = CreateStyledButton("Войти как администратор", new Point(50, 240), actionButtonColor, BtnLoginAdmin_Click);
-            btnExit = CreateStyledButton("Выйти из приложения", new Point(50, 320), exitButtonColor, BtnExit_Click);
+            btnRegisterGuest = CreateStyledButton("Зарегистрироваться как гость", new Point(50, 120), UIStyles.PrimaryButton, BtnRegisterGuest_Click);
+            btnLoginGuest = CreateStyledButton("Войти как гость", new Point(50, 180), UIStyles.PrimaryButton, (s, e) => ToggleFormScreen(true, "LoginGuest"));
+            btnLoginAdmin = CreateStyledButton("Войти как администратор", new Point(50, 240), UIStyles.PrimaryButton, (s, e) => ToggleFormScreen(true, "LoginAdmin"));
+            btnExit = CreateStyledButton("Выйти из приложения", new Point(50, 320), UIStyles.DangerButton, BtnExit_Click);
 
             lblTitle.Visible = false;
             btnRegisterGuest.Visible = false;
@@ -150,27 +135,24 @@ namespace PractiStudent
 
             lblFormActionTitle = new Label
             {
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(45, 45, 45),
+                Font = UIStyles.TitleFont,
+                ForeColor = UIStyles.TextColor,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Location = new Point(0, 10),
                 Size = new Size(345, 30)
             };
 
-            Label lblLogin = new Label { Text = "Логин:", Font = new Font("Segoe UI", 9), Location = new Point(30, 55), Size = new Size(280, 15) };
-            txtLogin = new TextBox { Font = new Font("Segoe UI", 11), Location = new Point(30, 75), Size = new Size(280, 25) };
+            Label lblLogin = new Label { Text = "Логин:", Font = UIStyles.LabelFont, Location = new Point(30, 55), Size = new Size(280, 15) };
+            txtLogin = new TextBox { Font = UIStyles.InputFont, Location = new Point(30, 75), Size = UIStyles.InputSize };
 
-            Label lblPassword = new Label { Text = "Пароль:", Font = new Font("Segoe UI", 9), Location = new Point(30, 115), Size = new Size(280, 15) };
-            txtPassword = new TextBox { Font = new Font("Segoe UI", 11), Location = new Point(30, 135), Size = new Size(280, 25), UseSystemPasswordChar = true };
+            Label lblPassword = new Label { Text = "Пароль:", Font = UIStyles.LabelFont, Location = new Point(30, 115), Size = new Size(280, 15) };
+            txtPassword = new TextBox { Font = UIStyles.InputFont, Location = new Point(30, 135), Size = UIStyles.InputSize, UseSystemPasswordChar = true };
 
-            Label lblConfirmPassword = new Label { Name = "lblConfirmPassword", Text = "Повторите пароль:", Font = new Font("Segoe UI", 9), Location = new Point(30, 175), Size = new Size(280, 15) };
-            txtConfirmPassword = new TextBox { Name = "txtConfirmPassword", Font = new Font("Segoe UI", 11), Location = new Point(30, 195), Size = new Size(280, 25), UseSystemPasswordChar = true };
+            Label lblConfirmPassword = new Label { Name = "lblConfirmPassword", Text = "Повторите пароль:", Font = UIStyles.LabelFont, Location = new Point(30, 175), Size = new Size(280, 15) };
+            txtConfirmPassword = new TextBox { Name = "txtConfirmPassword", Font = UIStyles.InputFont, Location = new Point(30, 195), Size = UIStyles.InputSize, UseSystemPasswordChar = true };
 
-            Color submitColor = Color.FromArgb(220, 240, 220);
-            Color backColor = Color.FromArgb(240, 240, 240);
-
-            btnSubmitAction = CreateStyledButton("Подтвердить", new Point(30, 250), submitColor, BtnSubmitAction_Click);
-            btnBackToMenu = CreateStyledButton("Вернуться назад", new Point(30, 310), backColor, BtnBackToMenu_Click);
+            btnSubmitAction = CreateStyledButton("Подтвердить", new Point(30, 250), UIStyles.SuccessButton, BtnSubmitAction_Click);
+            btnBackToMenu = CreateStyledButton("Вернуться назад", new Point(30, 310), UIStyles.NeutralButton, BtnBackToMenu_Click);
 
             panelInputContainer.Controls.AddRange(new Control[] {
                 lblFormActionTitle, lblLogin, txtLogin, lblPassword, txtPassword,
@@ -183,12 +165,10 @@ namespace PractiStudent
         private void ShowConnectionScreen()
         {
             _isDatabaseConnected = false;
-
             lblInitialTitle.Visible = true;
             btnConnectDatabase.Visible = true;
             btnExitInitial.Visible = true;
             lblConnectionStatus.Visible = false;
-
             lblTitle.Visible = false;
             btnRegisterGuest.Visible = false;
             btnLoginGuest.Visible = false;
@@ -217,12 +197,12 @@ namespace PractiStudent
             btnExit.Visible = true;
         }
 
-        private void BtnConnectDatabase_Click(object? sender, EventArgs e)
+        private void BtnConnectDatabase_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.Filter = "Access Database Files|*.accdb;*.mdb|All Files|*.*";
-                openFileDialog.Title = "Выберите базу данных \"Абитуриент\"";
+                openFileDialog.Filter = UIStyles.DatabaseFilter;
+                openFileDialog.Title = UIStyles.DatabaseTitle;
                 openFileDialog.CheckFileExists = true;
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -235,16 +215,12 @@ namespace PractiStudent
                     }
                     else
                     {
-                        MessageBox.Show(
+                        ErrorHandler.ShowWarning(
                             "Не удалось подключиться к базе данных.\n\n" +
                             "Убедитесь, что:\n" +
                             "1. Файл является базой данных Access (.accdb или .mdb)\n" +
                             "2. Файл содержит таблицу \"Пользователи\"\n" +
-                            "3. Файл не поврежден и не защищен паролем",
-                            "Ошибка подключения",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
+                            "3. Файл не поврежден и не защищен паролем");
                     }
                 }
             }
@@ -280,7 +256,6 @@ namespace PractiStudent
                     txtConfirmPassword.Visible = false;
                     btnSubmitAction.Location = new Point(30, 185);
                 }
-
                 panelInputContainer.Visible = true;
             }
             else
@@ -289,110 +264,99 @@ namespace PractiStudent
             }
         }
 
-        private void BtnRegisterGuest_Click(object? sender, EventArgs e)
+        private void BtnRegisterGuest_Click(object sender, EventArgs e)
         {
             ToggleFormScreen(true, "Register");
         }
 
-        private void BtnLoginGuest_Click(object? sender, EventArgs e)
-        {
-            ToggleFormScreen(true, "LoginGuest");
-        }
-
-        private void BtnLoginAdmin_Click(object? sender, EventArgs e)
-        {
-            ToggleFormScreen(true, "LoginAdmin");
-        }
-
-        private void BtnExit_Click(object? sender, EventArgs e)
+        private void BtnExit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
-        private void BtnBackToMenu_Click(object? sender, EventArgs e)
+        private void BtnBackToMenu_Click(object sender, EventArgs e)
         {
             ToggleFormScreen(false);
         }
 
-        private void BtnSubmitAction_Click(object? sender, EventArgs e)
+        private void PerformLogin(string role)
         {
             string login = txtLogin.Text.Trim();
             string password = txtPassword.Text.Trim();
 
             if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Пожалуйста, заполните все поля!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Пожалуйста, заполните все поля!");
+                return;
+            }
+
+            try
+            {
+                string userRole = _userService.ValidateUser(login, password, role);
+
+                if (userRole != null)
+                {
+                    ErrorHandler.ShowInfo($"Вы успешно вошли как {role.ToLower()}!");
+                    this.Hide();
+                    FormMain mainForm = new FormMain(userRole, null, _userService.GetDatabaseFileName(), _userService);
+                    mainForm.ShowDialog();
+                    this.Show();
+                }
+                else
+                {
+                    ErrorHandler.ShowWarning($"Неверный логин или пароль для {role.ToLower()}!");
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.Handle(ex, $"Login as {role}");
+            }
+        }
+        private void BtnSubmitAction_Click(object sender, EventArgs e)
+        {
+            string login = txtLogin.Text.Trim();
+            string password = txtPassword.Text.Trim();
+
+            if (!Validator.ValidateLogin(login, out string loginError))
+            {
+                ErrorHandler.ShowWarning(loginError);
+                return;
+            }
+
+            if (!Validator.ValidatePassword(password, out string passwordError))
+            {
+                ErrorHandler.ShowWarning(passwordError);
                 return;
             }
 
             if (currentMode == "Register")
             {
                 string confirmPassword = txtConfirmPassword.Text.Trim();
-                if (password != confirmPassword)
+                if (!Validator.ValidatePasswordsMatch(password, confirmPassword, out string matchError))
                 {
-                    MessageBox.Show("Пароли не совпадают!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ErrorHandler.ShowWarning(matchError);
                     return;
                 }
                 try
                 {
                     if (_userService.RegisterGuest(login, password))
                     {
-                        MessageBox.Show($"Регистрация гостя '{login}' успешна!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ErrorHandler.ShowInfo($"Регистрация гостя '{login}' успешна!");
                         ToggleFormScreen(false);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Ошибка регистрации", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ErrorHandler.Handle(ex, "Register Guest");
                 }
             }
             else if (currentMode == "LoginGuest")
             {
-                try
-                {
-                    string role = _userService.ValidateUser(login, password, "Гость");
-
-                    if (role != null)
-                    {
-                        MessageBox.Show("Вы успешно вошли как гость!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Hide();
-                        FormMain mainForm = new FormMain(role, null, _userService.GetDatabaseFileName(), _userService);
-                        mainForm.ShowDialog();
-                        this.Show();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Неверный логин или пароль для гостя!", "Ошибка авторизации", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Системный сбой", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                PerformLogin("Гость");
             }
             else if (currentMode == "LoginAdmin")
             {
-                try
-                {
-                    string role = _userService.ValidateUser(login, password, "Администратор");
-
-                    if (role != null)
-                    {
-                        MessageBox.Show("Вы успешно вошли как администратор!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Hide();
-                        FormMain mainForm = new FormMain(role, null, _userService.GetDatabaseFileName(), _userService);
-                        mainForm.ShowDialog();
-                        this.Show();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Доступ отклонен. Неверный логин или пароль администратора!", "Ошибка авторизации", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Системный сбой", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                PerformLogin("Администратор");
             }
         }
     }

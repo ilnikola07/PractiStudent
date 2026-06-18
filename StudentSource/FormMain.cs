@@ -1,29 +1,34 @@
 using Logic;
 using PractiStudent.Data;
+using StudentSource;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace PractiStudent
 {
     public partial class FormMain : Form
     {
-        private string currentUserRole;
-        private int? currentRegNumber;
-        private string databaseFileName;
-        private UserService _userService;
-
+        // Поля класса
+        private readonly string _currentUserRole;
+        private readonly string _databaseFileName;
+        private readonly UserService _userService;
         private readonly DatabaseHelper _dbHelper;
+        private readonly TableOperations _tableOps;
 
+        private string _currentTableName = "";
+        private DataTable _currentData;
+        private string _primaryKeyColumn = "";
+
+        // UI элементы
         private ComboBox cmbTables;
         private Label lblTableSelect;
         private Label lblConnectionInfo;
 
+        // Панели действий
         private Panel panelMainMenu;
         private Panel panelSearch;
         private Panel panelFilter;
@@ -32,10 +37,6 @@ namespace PractiStudent
         private Panel panelEdit;
         private Panel panelDelete;
         private Panel panelReport;
-
-        private string currentTableName = "";
-        private DataTable currentData;
-        private string primaryKeyColumn = "";
 
         protected override CreateParams CreateParams
         {
@@ -52,45 +53,73 @@ namespace PractiStudent
         {
             InitializeComponent();
 
-            this.currentUserRole = role;
-            this.currentRegNumber = regNumber;
-            this.databaseFileName = dbFileName;
-            this._userService = userService;
-            this._dbHelper = new DatabaseHelper();
-            this._dbHelper.SetDatabaseConnection(
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dbFileName));
+            _currentUserRole = role;
+            _databaseFileName = dbFileName;
+            _userService = userService;
+            _dbHelper = new DatabaseHelper();
+            _dbHelper.SetDatabaseConnection(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dbFileName));
+            _tableOps = new TableOperations(_dbHelper);
 
-            this.Text = currentUserRole == "Администратор"
-                ? "Главное окно (Администратор)"
-                : "Главное окно (Гость)";
-            this.Size = new Size(1200, 700);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(245, 245, 245);
+            InitializeForm();
+            LoadTablesIntoComboBox();
+        }
 
-            // Настройка DataGridView - прокрутка
-            dataGridViewMain.ScrollBars = ScrollBars.Both;
-            dataGridViewMain.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
+        private void InitializeForm()
+        {
+            ConfigureForm();
+            InitializeDataGridView();
             InitializeConnectionIndicator();
             InitializeLeftPanel();
             CreateAllActionPanels();
+            ShowPanel(FormModes.MainMenu);
+        }
 
-            ShowPanel(panelMainMenu);
-            LoadTablesIntoComboBox();
+        private void ConfigureForm()
+        {
+            this.Text = _currentUserRole == TableConstants.RoleAdmin
+                ? UIStyles.MainFormTitleAdmin
+                : UIStyles.MainFormTitleGuest;
+            this.Size = UIStyles.MainFormSize;
+            this.StartPosition = UIStyles.DefaultFormStartPosition;
+            this.FormBorderStyle = UIStyles.DefaultBorderStyle;
+            this.MaximizeBox = UIStyles.AllowMaximize;
+            this.MinimizeBox = UIStyles.AllowMinimize;
+            this.BackColor = UIStyles.Background;
+        }
+
+        private void InitializeDataGridView()
+        {
+            dataGridViewMain.ScrollBars = ScrollBars.Both;
+            dataGridViewMain.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewMain.ReadOnly = true;
+            dataGridViewMain.AllowUserToAddRows = false;
+            dataGridViewMain.AllowUserToDeleteRows = false;
+            dataGridViewMain.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewMain.MultiSelect = false;
+            dataGridViewMain.BackgroundColor = UIStyles.DataGridViewRowBackColor;
+            dataGridViewMain.RowHeadersVisible = false;
+
+            dataGridViewMain.ColumnHeadersDefaultCellStyle.BackColor = UIStyles.DataGridViewHeaderBackColor;
+            dataGridViewMain.ColumnHeadersDefaultCellStyle.ForeColor = UIStyles.TextColor;
+            dataGridViewMain.ColumnHeadersDefaultCellStyle.Font = UIStyles.DataGridViewHeaderFont;
+            dataGridViewMain.DefaultCellStyle.BackColor = UIStyles.DataGridViewRowBackColor;
+            dataGridViewMain.DefaultCellStyle.ForeColor = UIStyles.TextColor;
+            dataGridViewMain.DefaultCellStyle.Font = UIStyles.DataGridViewFont;
+            dataGridViewMain.AlternatingRowsDefaultCellStyle.BackColor = UIStyles.DataGridViewAltRowBackColor;
+            dataGridViewMain.GridColor = UIStyles.DataGridViewGridColor;
+            dataGridViewMain.BorderStyle = BorderStyle.None;
+            dataGridViewMain.EnableHeadersVisualStyles = false;
         }
 
         private void InitializeConnectionIndicator()
         {
             lblConnectionInfo = new Label
             {
-                Text = $"Подключение: {databaseFileName}",
-                Font = new Font("Segoe UI", 8),
-                ForeColor = Color.FromArgb(45, 45, 45),
-                Location = new Point(10, 5),
-                Size = new Size(380, 20),
+                Text = $"{UIStyles.DatabaseConnectionPrefix}{_databaseFileName}",
+                Font = UIStyles.HintFont,
+                ForeColor = UIStyles.TextColor,
+                Location = UIStyles.ConnectionInfoPosition,
+                Size = UIStyles.ConnectionInfoSize,
                 TextAlign = ContentAlignment.MiddleLeft
             };
             splitContainer1.Panel1.Controls.Add(lblConnectionInfo);
@@ -99,22 +128,10 @@ namespace PractiStudent
 
         private void InitializeLeftPanel()
         {
-            lblTableSelect = new Label
-            {
-                Text = "Выберите таблицу:",
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                ForeColor = Color.FromArgb(45, 45, 45),
-                Location = new Point(15, 35),
-                Size = new Size(280, 20)
-            };
+            lblTableSelect = PanelBuilder.CreateLabel("Выберите таблицу:", UIStyles.TableSelectLabelPosition, true);
 
-            cmbTables = new ComboBox
-            {
-                Font = new Font("Segoe UI", 10),
-                Location = new Point(15, 58),
-                Size = new Size(280, 30),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
+            cmbTables = PanelBuilder.CreateComboBox(UIStyles.TableSelectComboPosition);
+            cmbTables.Size = UIStyles.TableSelectComboSize;
             cmbTables.SelectedIndexChanged += CmbTables_SelectedIndexChanged;
 
             splitContainer1.Panel1.Controls.Add(lblTableSelect);
@@ -130,15 +147,14 @@ namespace PractiStudent
 
                 foreach (string table in tables)
                 {
-                    if (table.Equals("Пользователи", StringComparison.OrdinalIgnoreCase))
+                    if (table.Equals(TableConstants.TableUsers, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (currentUserRole == "Администратор")
+                        if (_currentUserRole == TableConstants.RoleAdmin)
                         {
                             cmbTables.Items.Add(table);
                         }
                         continue;
                     }
-
                     cmbTables.Items.Add(table);
                 }
 
@@ -148,14 +164,12 @@ namespace PractiStudent
                 }
                 else
                 {
-                    MessageBox.Show("Нет доступных таблиц для просмотра.", "Информация",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ErrorHandler.ShowInfo("Нет доступных таблиц для просмотра.");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки таблиц: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "LoadTables");
             }
         }
 
@@ -163,312 +177,281 @@ namespace PractiStudent
         {
             if (cmbTables.SelectedItem != null)
             {
-                currentTableName = cmbTables.SelectedItem.ToString();
+                _currentTableName = cmbTables.SelectedItem.ToString();
+                ClearActionPanels();
                 LoadTableData();
+                ShowPanel(FormModes.MainMenu);
             }
         }
 
         private void LoadTableData()
         {
-            if (string.IsNullOrEmpty(currentTableName)) return;
+            if (string.IsNullOrEmpty(_currentTableName)) return;
 
             try
             {
-                currentData = _dbHelper.GetAllData(currentTableName);
-                dataGridViewMain.DataSource = currentData;
+                _currentData = _dbHelper.GetAllData(_currentTableName);
+                DataFormatter.FormatDatesInTable(_currentData);
+                dataGridViewMain.DataSource = _currentData;
 
-                if (currentData.Columns.Count > 0)
+                if (_currentData.Columns.Count > 0)
                 {
-                    primaryKeyColumn = currentData.Columns[0].ColumnName;
+                    _primaryKeyColumn = _currentData.Columns[0].ColumnName;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "LoadTableData");
             }
         }
 
         private void CreateAllActionPanels()
         {
-            int panelTop = 100;
-            int panelHeight = 500;
-
-            panelMainMenu = CreatePanel(panelTop, panelHeight);
+            panelMainMenu = CreatePanel(FormModes.MainMenu);
             CreateMainMenuButtons();
 
-            panelSearch = CreatePanel(panelTop, panelHeight);
+            panelSearch = CreatePanel(FormModes.Search);
             CreateSearchPanel();
 
-            panelFilter = CreatePanel(panelTop, panelHeight);
+            panelFilter = CreatePanel(FormModes.Filter);
             CreateFilterPanel();
 
-            panelSort = CreatePanel(panelTop, panelHeight);
+            panelSort = CreatePanel(FormModes.Sort);
             CreateSortPanel();
 
-            if (currentUserRole == "Администратор")
+            if (_currentUserRole == TableConstants.RoleAdmin)
             {
-                panelAdd = CreatePanel(panelTop, panelHeight);
-                CreateAddPanel();
-
-                panelEdit = CreatePanel(panelTop, panelHeight);
-                CreateEditPanel();
-
-                panelDelete = CreatePanel(panelTop, panelHeight);
-                CreateDeletePanel();
+                panelAdd = CreatePanel(FormModes.Add);
+                panelEdit = CreatePanel(FormModes.Edit);
+                panelDelete = CreatePanel(FormModes.Delete);
             }
 
-            panelReport = CreatePanel(panelTop, panelHeight);
+            panelReport = CreatePanel(FormModes.Report);
             CreateReportPanel();
         }
 
-        private Panel CreatePanel(int top, int height)
+        private Panel CreatePanel(string mode)
         {
-            Panel panel = new Panel
-            {
-                Location = new Point(15, top),
-                Size = new Size(370, height),
-                Visible = false,
-                BackColor = Color.FromArgb(245, 245, 245)
-            };
+            Panel panel = PanelBuilder.CreateActionPanel(UIStyles.ActionPanelTop, UIStyles.ActionPanelHeight);
             splitContainer1.Panel1.Controls.Add(panel);
             return panel;
         }
 
-        private Button CreateButton(string text, Point location, Color backColor, EventHandler click)
+        private void ShowPanel(string mode)
         {
-            Button btn = new Button
+            foreach (Control ctrl in splitContainer1.Panel1.Controls)
             {
-                Text = text,
-                Font = new Font("Segoe UI", 10),
-                Location = location,
-                Size = new Size(280, 40),
-                BackColor = backColor,
-                FlatStyle = FlatStyle.Flat
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            btn.Click += click;
-            return btn;
+                if (ctrl is Panel p)
+                {
+                    p.Visible = (p == GetPanelByMode(mode));
+                    if (!p.Visible)
+                    {
+                        p.Controls.Clear();
+                    }
+                }
+            }
+
+            RebuildPanel(mode);
+            GetPanelByMode(mode).Visible = true;
+            PopulateColumnComboBoxes();
         }
 
-        private Label CreateLabel(string text, Point location, bool bold = false)
+        private Panel GetPanelByMode(string mode)
         {
-            return new Label
+            return mode switch
             {
-                Text = text,
-                Font = new Font("Segoe UI", 9, bold ? FontStyle.Bold : FontStyle.Regular),
-                ForeColor = Color.FromArgb(45, 45, 45),
-                Location = location,
-                Size = new Size(280, 20)
-            };
-        }
-
-        private TextBox CreateTextBox(Point location)
-        {
-            return new TextBox
-            {
-                Font = new Font("Segoe UI", 10),
-                Location = location,
-                Size = new Size(280, 25)
+                FormModes.MainMenu => panelMainMenu,
+                FormModes.Search => panelSearch,
+                FormModes.Filter => panelFilter,
+                FormModes.Sort => panelSort,
+                FormModes.Add => panelAdd,
+                FormModes.Edit => panelEdit,
+                FormModes.Delete => panelDelete,
+                FormModes.Report => panelReport,
+                _ => panelMainMenu
             };
         }
 
-        private ComboBox CreateComboBox(Point location)
+        private void RebuildPanel(string mode)
         {
-            return new ComboBox
+            switch (mode)
             {
-                Font = new Font("Segoe UI", 10),
-                Location = location,
-                Size = new Size(280, 25),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
+                case FormModes.MainMenu:
+                    CreateMainMenuButtons();
+                    break;
+                case FormModes.Search:
+                    CreateSearchPanel();
+                    break;
+                case FormModes.Filter:
+                    CreateFilterPanel();
+                    break;
+                case FormModes.Sort:
+                    CreateSortPanel();
+                    break;
+                case FormModes.Add:
+                    CreateDynamicForm(panelAdd, null, true);
+                    break;
+                case FormModes.Edit:
+                    if (dataGridViewMain.CurrentRow != null)
+                    {
+                        CreateDynamicForm(panelEdit, dataGridViewMain.CurrentRow, false);
+                    }
+                    break;
+                case FormModes.Delete:
+                    CreateDeletePanel();
+                    break;
+                case FormModes.Report:
+                    CreateReportPanel();
+                    break;
+            }
+        }
+
+        private void ClearActionPanels()
+        {
+            panelAdd?.Controls.Clear();
+            panelEdit?.Controls.Clear();
+            panelDelete?.Controls.Clear();
         }
 
         private void CreateMainMenuButtons()
         {
-            Color btnColor = Color.FromArgb(230, 235, 240);
-            int y = 10;
+            panelMainMenu.Controls.Clear();
+            int y = UIStyles.ActionButtonPosition.Y;
 
-            panelMainMenu.Controls.Add(CreateButton("Поиск", new Point(0, y), btnColor, BtnSearch_Click));
-            y += 50;
-            panelMainMenu.Controls.Add(CreateButton("Фильтрация", new Point(0, y), btnColor, BtnFilter_Click));
-            y += 50;
-            panelMainMenu.Controls.Add(CreateButton("Сортировка", new Point(0, y), btnColor, BtnSort_Click));
-            y += 50;
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Поиск", new Point(0, y), UIStyles.PrimaryButton, BtnSearch_Click));
+            y += UIStyles.ButtonVerticalSpacing;
 
-            if (currentUserRole == "Администратор")
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Фильтрация", new Point(0, y), UIStyles.PrimaryButton, BtnFilter_Click));
+            y += UIStyles.ButtonVerticalSpacing;
+
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Сортировка", new Point(0, y), UIStyles.PrimaryButton, BtnSort_Click));
+            y += UIStyles.ButtonVerticalSpacing;
+
+            if (_currentUserRole == TableConstants.RoleAdmin)
             {
-                panelMainMenu.Controls.Add(CreateButton("Добавить запись", new Point(0, y), btnColor, BtnAdd_Click));
-                y += 50;
-                panelMainMenu.Controls.Add(CreateButton("Редактировать запись", new Point(0, y), btnColor, BtnEdit_Click));
-                y += 50;
-                panelMainMenu.Controls.Add(CreateButton("Удалить запись", new Point(0, y), btnColor, BtnDelete_Click));
-                y += 50;
+                panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Добавить запись", new Point(0, y), UIStyles.PrimaryButton, BtnAdd_Click));
+                y += UIStyles.ButtonVerticalSpacing;
+
+                panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Редактировать запись", new Point(0, y), UIStyles.PrimaryButton, BtnEdit_Click));
+                y += UIStyles.ButtonVerticalSpacing;
+
+                panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Удалить запись", new Point(0, y), UIStyles.PrimaryButton, BtnDelete_Click));
+                y += UIStyles.ButtonVerticalSpacing;
             }
 
-            panelMainMenu.Controls.Add(CreateButton("Создать отчёт (Word)", new Point(0, y), btnColor, BtnReport_Click));
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Создать отчёт (Word)", new Point(0, y), UIStyles.PrimaryButton, BtnReport_Click));
             y += 60;
 
-            panelMainMenu.Controls.Add(CreateButton("Выйти из приложения", new Point(0, y),
-                Color.FromArgb(245, 220, 220), BtnExit_Click));
-            y += 50;
-            panelMainMenu.Controls.Add(CreateButton("Выйти из аккаунта", new Point(0, y),
-                Color.FromArgb(240, 240, 240), BtnLogout_Click));
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Выйти из приложения", new Point(0, y), UIStyles.DangerButton, BtnExit_Click));
+            y += UIStyles.ButtonVerticalSpacing;
+
+            panelMainMenu.Controls.Add(PanelBuilder.CreateButton("Выйти из аккаунта", new Point(0, y), UIStyles.NeutralButton, BtnLogout_Click));
         }
 
         private void CreateSearchPanel()
         {
-            panelSearch.Controls.Add(CreateLabel("Поле для поиска:", new Point(0, 5), true));
-            ComboBox cmbColumn = CreateComboBox(new Point(0, 28));
+            panelSearch.Controls.Clear();
+            int y = 5;
+
+            panelSearch.Controls.Add(PanelBuilder.CreateLabel("Поле для поиска:", new Point(0, y), true));
+            ComboBox cmbColumn = PanelBuilder.CreateComboBox(new Point(0, y + 23));
             cmbColumn.Name = "cmbSearchColumn";
             panelSearch.Controls.Add(cmbColumn);
 
-            panelSearch.Controls.Add(CreateLabel("Поисковый запрос:", new Point(0, 65), true));
-            TextBox txtSearch = CreateTextBox(new Point(0, 88));
+            panelSearch.Controls.Add(PanelBuilder.CreateLabel("Поисковый запрос:", new Point(0, y + 60), true));
+            TextBox txtSearch = PanelBuilder.CreateTextBox(new Point(0, y + 83));
             txtSearch.Name = "txtSearchValue";
             panelSearch.Controls.Add(txtSearch);
 
-            Button btnDoSearch = CreateButton("Найти", new Point(0, 125),
-                Color.FromArgb(220, 240, 220), BtnDoSearch_Click);
-            panelSearch.Controls.Add(btnDoSearch);
-
-            Button btnShowAll = CreateButton("Показать все", new Point(0, 175),
-                Color.FromArgb(230, 235, 240), BtnShowAll_Click);
-            panelSearch.Controls.Add(btnShowAll);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, 280),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panelSearch.Controls.Add(btnBack);
+            panelSearch.Controls.Add(PanelBuilder.CreateButton("Найти", new Point(0, y + 120), UIStyles.SuccessButton, BtnDoSearch_Click));
+            panelSearch.Controls.Add(PanelBuilder.CreateButton("Показать все", new Point(0, y + 170), UIStyles.PrimaryButton, BtnShowAll_Click));
+            panelSearch.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 275), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void CreateFilterPanel()
         {
-            panelFilter.Controls.Add(CreateLabel("Поле для фильтрации:", new Point(0, 5), true));
-            ComboBox cmbColumn = CreateComboBox(new Point(0, 28));
+            panelFilter.Controls.Clear();
+            int y = 5;
+
+            panelFilter.Controls.Add(PanelBuilder.CreateLabel("Поле для фильтрации:", new Point(0, y), true));
+            ComboBox cmbColumn = PanelBuilder.CreateComboBox(new Point(0, y + 23));
             cmbColumn.Name = "cmbFilterColumn";
             cmbColumn.SelectedIndexChanged += CmbFilterColumn_SelectedIndexChanged;
             panelFilter.Controls.Add(cmbColumn);
 
-            panelFilter.Controls.Add(CreateLabel("Значение:", new Point(0, 65), true));
-            ComboBox cmbValue = CreateComboBox(new Point(0, 88));
-            cmbValue.Name = "cmbFilterValue";
-            panelFilter.Controls.Add(cmbValue);
+            panelFilter.Controls.Add(PanelBuilder.CreateLabel("Значение:", new Point(0, y + 60), true));
+            TextBox txtValue = PanelBuilder.CreateTextBox(new Point(0, y + 83));
+            txtValue.Name = "txtFilterValue";
+            panelFilter.Controls.Add(txtValue);
 
-            Button btnApplyFilter = CreateButton("Применить фильтр", new Point(0, 125),
-                Color.FromArgb(220, 240, 220), BtnApplyFilter_Click);
-            panelFilter.Controls.Add(btnApplyFilter);
+            Label lblHint = new Label
+            {
+                Text = UIStyles.FilterHint,
+                Font = UIStyles.HintFont,
+                ForeColor = UIStyles.HintColor,
+                Location = new Point(0, y + 110),
+                Size = new Size(280, 15)
+            };
+            panelFilter.Controls.Add(lblHint);
 
-            Button btnShowAll = CreateButton("Сбросить фильтр", new Point(0, 175),
-                Color.FromArgb(230, 235, 240), BtnShowAll_Click);
-            panelFilter.Controls.Add(btnShowAll);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, 280),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panelFilter.Controls.Add(btnBack);
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Применить фильтр", new Point(0, y + 135), UIStyles.SuccessButton, BtnApplyFilter_Click));
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Сбросить фильтр", new Point(0, y + 185), UIStyles.PrimaryButton, BtnShowAll_Click));
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 290), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void CreateSortPanel()
         {
-            panelSort.Controls.Add(CreateLabel("Поле для сортировки:", new Point(0, 5), true));
-            ComboBox cmbColumn = CreateComboBox(new Point(0, 28));
+            panelSort.Controls.Clear();
+            int y = 5;
+
+            panelSort.Controls.Add(PanelBuilder.CreateLabel("Поле для сортировки:", new Point(0, y), true));
+            ComboBox cmbColumn = PanelBuilder.CreateComboBox(new Point(0, y + 23));
             cmbColumn.Name = "cmbSortColumn";
             panelSort.Controls.Add(cmbColumn);
 
-            Button btnAsc = CreateButton("По возрастанию (А-Я / 0-9)", new Point(0, 70),
-                Color.FromArgb(220, 240, 220), BtnSortAsc_Click);
-            panelSort.Controls.Add(btnAsc);
-
-            Button btnDesc = CreateButton("По убыванию (Я-А / 9-0)", new Point(0, 120),
-                Color.FromArgb(220, 240, 220), BtnSortDesc_Click);
-            panelSort.Controls.Add(btnDesc);
-
-            Button btnShowAll = CreateButton("Сбросить сортировку", new Point(0, 170),
-                Color.FromArgb(230, 235, 240), BtnShowAll_Click);
-            panelSort.Controls.Add(btnShowAll);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, 280),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panelSort.Controls.Add(btnBack);
-        }
-
-        private void CreateAddPanel()
-        {
-            panelAdd.AutoScroll = true;
-        }
-
-        private void CreateEditPanel()
-        {
-            panelEdit.AutoScroll = true;
+            panelSort.Controls.Add(PanelBuilder.CreateButton("По возрастанию", new Point(0, y + 65), UIStyles.SuccessButton, BtnSortAsc_Click));
+            panelSort.Controls.Add(PanelBuilder.CreateButton("По убыванию", new Point(0, y + 115), UIStyles.SuccessButton, BtnSortDesc_Click));
+            panelSort.Controls.Add(PanelBuilder.CreateButton("Сбросить сортировку", new Point(0, y + 165), UIStyles.PrimaryButton, BtnShowAll_Click));
+            panelSort.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 270), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void CreateDeletePanel()
         {
-            panelDelete.Controls.Add(CreateLabel("Выберите запись в таблице справа", new Point(0, 5), true));
-            panelDelete.Controls.Add(CreateLabel("и нажмите кнопку ниже для удаления.", new Point(0, 28), true));
+            panelDelete.Controls.Clear();
+            int y = 5;
 
-            Button btnDelete = CreateButton("Удалить выбранную запись", new Point(0, 70),
-                Color.FromArgb(245, 220, 220), BtnDoDelete_Click);
-            panelDelete.Controls.Add(btnDelete);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, 280),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panelDelete.Controls.Add(btnBack);
+            panelDelete.Controls.Add(PanelBuilder.CreateLabel("Выберите запись в таблице справа", new Point(0, y), true));
+            panelDelete.Controls.Add(PanelBuilder.CreateLabel("и нажмите кнопку ниже для удаления.", new Point(0, y + 23), false));
+            panelDelete.Controls.Add(PanelBuilder.CreateButton("Удалить выбранную запись", new Point(0, y + 65), UIStyles.DangerButton, BtnDoDelete_Click));
+            panelDelete.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 270), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void CreateReportPanel()
         {
-            panelReport.Controls.Add(CreateLabel("Формат отчёта:", new Point(0, 5), true));
-            ComboBox cmbFormat = CreateComboBox(new Point(0, 28));
+            panelReport.Controls.Clear();
+            int y = 5;
+
+            panelReport.Controls.Add(PanelBuilder.CreateLabel("Формат отчёта:", new Point(0, y), true));
+            ComboBox cmbFormat = PanelBuilder.CreateComboBox(new Point(0, y + 23));
             cmbFormat.Name = "cmbReportFormat";
             cmbFormat.Items.Add("Word (.doc)");
             cmbFormat.Items.Add("Текстовый файл (.txt)");
             cmbFormat.SelectedIndex = 0;
             panelReport.Controls.Add(cmbFormat);
 
-            panelReport.Controls.Add(CreateLabel("Отчёт будет содержать все данные", new Point(0, 70)));
-            panelReport.Controls.Add(CreateLabel("текущей выбранной таблицы.", new Point(0, 93)));
-
-            Button btnCreateReport = CreateButton("Сформировать отчёт", new Point(0, 130),
-                Color.FromArgb(220, 240, 220), BtnCreateReport_Click);
-            panelReport.Controls.Add(btnCreateReport);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, 280),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panelReport.Controls.Add(btnBack);
-        }
-
-        private void ShowPanel(Panel panelToShow)
-        {
-            foreach (Control ctrl in splitContainer1.Panel1.Controls)
-            {
-                if (ctrl is Panel p && p != panelToShow)
-                {
-                    p.Visible = false;
-                    p.Controls.Clear();
-                }
-            }
-
-            if (panelToShow == panelMainMenu) CreateMainMenuButtons();
-            else if (panelToShow == panelSearch) CreateSearchPanel();
-            else if (panelToShow == panelFilter) CreateFilterPanel();
-            else if (panelToShow == panelSort) CreateSortPanel();
-            else if (panelToShow == panelAdd) CreateAddPanel();
-            else if (panelToShow == panelEdit) CreateEditPanel();
-            else if (panelToShow == panelDelete) CreateDeletePanel();
-            else if (panelToShow == panelReport) CreateReportPanel();
-
-            panelToShow.Visible = true;
-
-            PopulateColumnComboBoxes();
+            panelReport.Controls.Add(PanelBuilder.CreateLabel("Отчёт будет содержать все данные", new Point(0, y + 65)));
+            panelReport.Controls.Add(PanelBuilder.CreateLabel("текущей выбранной таблицы.", new Point(0, y + 88)));
+            panelReport.Controls.Add(PanelBuilder.CreateButton("Сформировать отчёт", new Point(0, y + 125), UIStyles.SuccessButton, BtnCreateReport_Click));
+            panelReport.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 270), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void PopulateColumnComboBoxes()
         {
-            if (string.IsNullOrEmpty(currentTableName)) return;
+            if (string.IsNullOrEmpty(_currentTableName)) return;
 
             try
             {
-                List<string> columns = _dbHelper.GetColumnNames(currentTableName);
+                List<string> columns = _dbHelper.GetColumnNames(_currentTableName);
 
                 foreach (Control ctrl in splitContainer1.Panel1.Controls)
                 {
@@ -477,15 +460,10 @@ namespace PractiStudent
                         foreach (Control child in panel.Controls)
                         {
                             if (child is ComboBox cmb &&
-                                (cmb.Name == "cmbSearchColumn" ||
-                                 cmb.Name == "cmbFilterColumn" ||
-                                 cmb.Name == "cmbSortColumn"))
+                                (cmb.Name == "cmbSearchColumn" || cmb.Name == "cmbFilterColumn" || cmb.Name == "cmbSortColumn"))
                             {
                                 cmb.Items.Clear();
-                                foreach (string col in columns)
-                                {
-                                    cmb.Items.Add(col);
-                                }
+                                cmb.Items.AddRange(columns.ToArray());
                                 if (cmb.Items.Count > 0)
                                     cmb.SelectedIndex = 0;
                             }
@@ -498,25 +476,7 @@ namespace PractiStudent
 
         private void CmbFilterColumn_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ComboBox cmbColumn = sender as ComboBox;
-            if (cmbColumn == null || cmbColumn.SelectedItem == null) return;
-
-            string columnName = cmbColumn.SelectedItem.ToString();
-            ComboBox cmbValue = FindControlInPanel(panelFilter, "cmbFilterValue") as ComboBox;
-            if (cmbValue == null) return;
-
-            try
-            {
-                List<string> values = _dbHelper.GetDistinctValues(currentTableName, columnName);
-                cmbValue.Items.Clear();
-                cmbValue.Items.Add("(Все значения)");
-                foreach (string val in values)
-                {
-                    cmbValue.Items.Add(val);
-                }
-                cmbValue.SelectedIndex = 0;
-            }
-            catch { }
+            // Для будущей функциональности - загрузка уникальных значений
         }
 
         private Control FindControlInPanel(Panel panel, string name)
@@ -530,27 +490,22 @@ namespace PractiStudent
 
         private void BtnSearch_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelSearch);
+            if (CheckTableSelected()) ShowPanel(FormModes.Search);
         }
 
         private void BtnFilter_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelFilter);
+            if (CheckTableSelected()) ShowPanel(FormModes.Filter);
         }
 
         private void BtnSort_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelSort);
+            if (CheckTableSelected()) ShowPanel(FormModes.Sort);
         }
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelAdd);
-            CreateDynamicForm(panelAdd, null, true);
+            if (CheckTableSelected()) ShowPanel(FormModes.Add);
         }
 
         private void BtnEdit_Click(object sender, EventArgs e)
@@ -558,24 +513,20 @@ namespace PractiStudent
             if (!CheckTableSelected()) return;
             if (dataGridViewMain.CurrentRow == null)
             {
-                MessageBox.Show("Выберите запись для редактирования!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Выберите запись для редактирования!");
                 return;
             }
-            ShowPanel(panelEdit);
-            CreateDynamicForm(panelEdit, dataGridViewMain.CurrentRow, false);
+            ShowPanel(FormModes.Edit);
         }
 
         private void BtnDelete_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelDelete);
+            if (CheckTableSelected()) ShowPanel(FormModes.Delete);
         }
 
         private void BtnReport_Click(object sender, EventArgs e)
         {
-            if (!CheckTableSelected()) return;
-            ShowPanel(panelReport);
+            if (CheckTableSelected()) ShowPanel(FormModes.Report);
         }
 
         private void BtnExit_Click(object sender, EventArgs e)
@@ -590,7 +541,7 @@ namespace PractiStudent
 
         private void BtnBackToMenu_Click(object sender, EventArgs e)
         {
-            ShowPanel(panelMainMenu);
+            ShowPanel(FormModes.MainMenu);
         }
 
         private void BtnDoSearch_Click(object sender, EventArgs e)
@@ -601,45 +552,41 @@ namespace PractiStudent
             if (cmbColumn == null || txtValue == null) return;
             if (string.IsNullOrWhiteSpace(txtValue.Text))
             {
-                MessageBox.Show("Введите поисковый запрос!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Введите поисковый запрос!");
                 return;
             }
 
             try
             {
-                currentData = _dbHelper.SearchData(currentTableName, cmbColumn.SelectedItem.ToString(), txtValue.Text.Trim());
-                dataGridViewMain.DataSource = currentData;
+                _currentData = _tableOps.Search(_currentTableName, cmbColumn.SelectedItem.ToString(), txtValue.Text.Trim());
+                dataGridViewMain.DataSource = _currentData;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "Search");
             }
         }
 
         private void BtnApplyFilter_Click(object sender, EventArgs e)
         {
             ComboBox cmbColumn = FindControlInPanel(panelFilter, "cmbFilterColumn") as ComboBox;
-            ComboBox cmbValue = FindControlInPanel(panelFilter, "cmbFilterValue") as ComboBox;
+            TextBox txtValue = FindControlInPanel(panelFilter, "txtFilterValue") as TextBox;
 
-            if (cmbColumn == null || cmbValue == null) return;
-            if (cmbValue.SelectedIndex <= 0)
+            if (cmbColumn == null || txtValue == null) return;
+            if (string.IsNullOrWhiteSpace(txtValue.Text))
             {
-                MessageBox.Show("Выберите значение для фильтрации!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Введите значение для фильтрации!");
                 return;
             }
 
             try
             {
-                currentData = _dbHelper.FilterData(currentTableName, cmbColumn.SelectedItem.ToString(), cmbValue.SelectedItem.ToString());
-                dataGridViewMain.DataSource = currentData;
+                _currentData = _tableOps.Filter(_currentTableName, cmbColumn.SelectedItem.ToString(), txtValue.Text.Trim(), false);
+                dataGridViewMain.DataSource = _currentData;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка фильтрации: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "Filter");
             }
         }
 
@@ -648,20 +595,18 @@ namespace PractiStudent
             ComboBox cmbColumn = FindControlInPanel(panelSort, "cmbSortColumn") as ComboBox;
             if (cmbColumn == null || cmbColumn.SelectedItem == null)
             {
-                MessageBox.Show("Выберите поле для сортировки!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Выберите поле для сортировки!");
                 return;
             }
 
             try
             {
-                currentData = _dbHelper.SortData(currentTableName, cmbColumn.SelectedItem.ToString(), true);
-                dataGridViewMain.DataSource = currentData;
+                _currentData = _tableOps.Sort(_currentTableName, cmbColumn.SelectedItem.ToString(), true);
+                dataGridViewMain.DataSource = _currentData;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сортировки: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "Sort");
             }
         }
 
@@ -670,20 +615,18 @@ namespace PractiStudent
             ComboBox cmbColumn = FindControlInPanel(panelSort, "cmbSortColumn") as ComboBox;
             if (cmbColumn == null || cmbColumn.SelectedItem == null)
             {
-                MessageBox.Show("Выберите поле для сортировки!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Выберите поле для сортировки!");
                 return;
             }
 
             try
             {
-                currentData = _dbHelper.SortData(currentTableName, cmbColumn.SelectedItem.ToString(), false);
-                dataGridViewMain.DataSource = currentData;
+                _currentData = _tableOps.Sort(_currentTableName, cmbColumn.SelectedItem.ToString(), false);
+                dataGridViewMain.DataSource = _currentData;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сортировки: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "Sort");
             }
         }
 
@@ -692,94 +635,17 @@ namespace PractiStudent
             LoadTableData();
         }
 
-        // Определяем AutoNumber поля (ID, Регистрационный_номер и т.д.)
-        // Жёстко задаём AutoNumber поля для каждой таблицы
-        private List<string> GetAutoNumberColumns()
-        {
-            var autoNumberColumns = new List<string>();
-
-            switch (currentTableName)
-            {
-                case "Пользователи":
-                    autoNumberColumns.Add("ID");
-                    break;
-                case "Абитуриент":
-                    autoNumberColumns.Add("Регистрационный_номер");
-                    break;
-                //case "Что_окончил":
-                //    autoNumberColumns.Add("Код_учебного_заведения");
-                //    break;
-                case "Факультет":
-                    autoNumberColumns.Add("Код_факультета");
-                    break;
-                case "Специальность":
-                    autoNumberColumns.Add("Код_специальности");
-                    break;
-                case "Специализация":
-                    autoNumberColumns.Add("Код_специализации");
-                    break;
-            }
-
-            return autoNumberColumns;
-        }
-
-        // Определяем поля с вариантами Да/Нет
-        private List<string> GetYesNoFields()
-        {
-            var yesNoFields = new List<string>();
-
-            if (currentTableName == "Абитуриент")
-            {
-                yesNoFields.Add("Наличие_медали");
-            }
-
-            return yesNoFields;
-        }
-
-        private Dictionary<string, string> GetForeignKeyMappings()
-        {
-            var fkMappings = new Dictionary<string, string>();
-
-            // Жёстко задаём связи на основе схемы БД
-            if (currentTableName == "Абитуриент")
-            {
-                fkMappings["Код_учебного_заведения"] = "Что_окончил";
-                fkMappings["Код_специализации"] = "Специализация";
-            }
-            else if (currentTableName == "Специализация")
-            {
-                fkMappings["Код_специальности"] = "Специальность";
-            }
-            else if (currentTableName == "Специальность")
-            {
-                fkMappings["Код_факультета"] = "Факультет";
-            }
-
-            return fkMappings;
-        }
-
-
         private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd)
         {
             panel.Controls.Clear();
-
-            List<string> columns = _dbHelper.GetColumnNames(currentTableName);
-            var autoNumberColumns = GetAutoNumberColumns();
-            var fkMappings = GetForeignKeyMappings();
-            var yesNoFields = GetYesNoFields();
+            List<string> columns = _dbHelper.GetColumnNames(_currentTableName);
+            var autoNumberColumns = _tableOps.GetAutoNumberColumns(_currentTableName);
+            var fkMappings = _tableOps.GetForeignKeyMappings(_currentTableName);
 
             int y = 5;
-
-            if (isAdd)
-            {
-                panel.Controls.Add(CreateLabel("Добавление новой записи", new Point(0, y), true));
-                y += 25;
-            }
-            else
-            {
-                panel.Controls.Add(CreateLabel("Редактирование записи", new Point(0, y), true));
-                y += 25;
-            }
+            string title = isAdd ? UIStyles.AddRecordTitle : UIStyles.EditRecordTitle;
+            panel.Controls.Add(PanelBuilder.CreateLabel(title, new Point(0, y), true));
+            y += 25;
 
             Dictionary<string, TextBox> textBoxes = new Dictionary<string, TextBox>();
             Dictionary<string, ComboBox> comboBoxes = new Dictionary<string, ComboBox>();
@@ -788,64 +654,23 @@ namespace PractiStudent
             {
                 bool isAutoNumber = autoNumberColumns.Contains(col);
                 bool isForeignKey = fkMappings.ContainsKey(col);
-                bool isYesNo = yesNoFields.Contains(col);
 
-                panel.Controls.Add(CreateLabel(col + ":", new Point(0, y)));
+                panel.Controls.Add(PanelBuilder.CreateLabel(col + ":", new Point(0, y)));
                 y += 20;
 
                 if (isAutoNumber)
                 {
-                    // AutoNumber - только для чтения
-                    TextBox txt = CreateTextBox(new Point(0, y));
+                    TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
                     txt.Name = "txt_" + col;
                     txt.ReadOnly = true;
                     txt.BackColor = Color.FromArgb(240, 240, 240);
-
-                    if (!isAdd && row != null)
-                    {
-                        txt.Text = row.Cells[col].Value?.ToString() ?? "";
-                    }
-                    else
-                    {
-                        txt.Text = "(автоматически)";
-                    }
-
+                    txt.Text = (!isAdd && row != null) ? row.Cells[col].Value?.ToString() ?? "" : UIStyles.AutoValueText;
                     textBoxes[col] = txt;
                     panel.Controls.Add(txt);
                 }
-                else if (isYesNo)
-                {
-                    // Поле Да/Нет - ComboBox с двумя вариантами
-                    ComboBox cmb = CreateComboBox(new Point(0, y));
-                    cmb.Name = "cmb_" + col;
-                    cmb.Items.Add("да");
-                    cmb.Items.Add("нет");
-
-                    // Устанавливаем текущее значение при редактировании
-                    if (!isAdd && row != null && row.Cells[col].Value != null)
-                    {
-                        string currentValue = row.Cells[col].Value.ToString().ToLower();
-                        if (currentValue == "да" || currentValue == "нет")
-                        {
-                            cmb.SelectedItem = currentValue;
-                        }
-                        else
-                        {
-                            cmb.SelectedIndex = 0;
-                        }
-                    }
-                    else
-                    {
-                        cmb.SelectedIndex = 0;
-                    }
-
-                    comboBoxes[col] = cmb;
-                    panel.Controls.Add(cmb);
-                }
                 else if (isForeignKey)
                 {
-                    // Foreign Key - ComboBox со значениями из связанной таблицы
-                    ComboBox cmb = CreateComboBox(new Point(0, y));
+                    ComboBox cmb = PanelBuilder.CreateComboBox(new Point(0, y));
                     cmb.Name = "cmb_" + col;
 
                     try
@@ -858,15 +683,12 @@ namespace PractiStudent
                             string codeColumn = relatedData.Columns[0].ColumnName;
                             string nameColumn = relatedData.Columns[1].ColumnName;
 
-                            cmb.Items.Add("(не выбрано)");
-
+                            cmb.Items.Add(UIStyles.NotSelectedText);
                             foreach (DataRow relatedRow in relatedData.Rows)
                             {
                                 string code = relatedRow[codeColumn].ToString();
                                 string name = relatedRow[nameColumn].ToString();
-                                string display = $"{code} - {name}";
-
-                                cmb.Items.Add(display);
+                                cmb.Items.Add($"{code} - {name}");
                             }
 
                             if (!isAdd && row != null && row.Cells[col].Value != null)
@@ -886,136 +708,80 @@ namespace PractiStudent
                                 cmb.SelectedIndex = 0;
                             }
                         }
-                        else
-                        {
-                            TextBox txt = CreateTextBox(new Point(0, y));
-                            txt.Name = "txt_" + col;
-                            txt.Text = (!isAdd && row != null) ? row.Cells[col].Value?.ToString() ?? "" : "";
-                            textBoxes[col] = txt;
-                            panel.Controls.Add(txt);
-                            y += 35;
-                            continue;
-                        }
                     }
-                    catch (Exception ex)
-                    {
-                        TextBox txt = CreateTextBox(new Point(0, y));
-                        txt.Name = "txt_" + col;
-                        txt.Text = (!isAdd && row != null) ? row.Cells[col].Value?.ToString() ?? "" : "";
-                        textBoxes[col] = txt;
-                        panel.Controls.Add(txt);
-                        y += 35;
-                        continue;
-                    }
+                    catch { }
 
                     comboBoxes[col] = cmb;
                     panel.Controls.Add(cmb);
                 }
                 else
                 {
-                    // Обычное поле - TextBox
-                    TextBox txt = CreateTextBox(new Point(0, y));
+                    TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
                     txt.Name = "txt_" + col;
-
                     if (!isAdd && row != null)
                     {
                         txt.Text = row.Cells[col].Value?.ToString() ?? "";
                     }
-
                     textBoxes[col] = txt;
                     panel.Controls.Add(txt);
                 }
-
                 y += 35;
             }
 
-            Button btnSubmit = CreateButton(isAdd ? "Добавить" : "Сохранить", new Point(0, y + 10),
-                Color.FromArgb(220, 240, 220), (s, ev) => BtnSubmitDynamic_Click(s, ev, textBoxes, comboBoxes, isAdd, row));
-            panel.Controls.Add(btnSubmit);
-
-            Button btnBack = CreateButton("Вернуться назад", new Point(0, y + 60),
-                Color.FromArgb(240, 240, 240), BtnBackToMenu_Click);
-            panel.Controls.Add(btnBack);
+            string buttonText = isAdd ? "Добавить" : "Сохранить";
+            panel.Controls.Add(PanelBuilder.CreateButton(buttonText, new Point(0, y + 10), UIStyles.SuccessButton,
+                (s, ev) => BtnSubmitDynamic_Click(s, ev, textBoxes, comboBoxes, isAdd, row)));
+            panel.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 60), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void BtnSubmitDynamic_Click(object sender, EventArgs e,
-     Dictionary<string, TextBox> textBoxes,
-     Dictionary<string, ComboBox> comboBoxes,
-     bool isAdd, DataGridViewRow row)
+            Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes,
+            bool isAdd, DataGridViewRow row)
         {
             try
             {
-                Dictionary<string, object> values = new Dictionary<string, object>();
-                var autoNumberColumns = GetAutoNumberColumns();
-                var yesNoFields = GetYesNoFields();
+                var values = new Dictionary<string, object>();
+                var autoNumberColumns = _tableOps.GetAutoNumberColumns(_currentTableName);
 
-                // Обрабатываем TextBox поля
                 foreach (var kvp in textBoxes)
                 {
-                    string fieldName = kvp.Key;
                     string val = kvp.Value.Text.Trim();
-
-                    if (isAdd && autoNumberColumns.Contains(fieldName))
-                    {
-                        continue;
-                    }
-
-                    values[fieldName] = string.IsNullOrEmpty(val) ? DBNull.Value : (object)val;
+                    values[kvp.Key] = string.IsNullOrEmpty(val) ? DBNull.Value : (object)val;
                 }
 
-                // Обрабатываем ComboBox поля
                 foreach (var kvp in comboBoxes)
                 {
-                    string fieldName = kvp.Key;
                     ComboBox cmb = kvp.Value;
-
-                    if (yesNoFields.Contains(fieldName))
+                    if (cmb.SelectedIndex <= 0)
                     {
-                        // Для полей Да/Нет сохраняем выбранное значение как есть
-                        if (cmb.SelectedItem != null)
-                        {
-                            values[fieldName] = cmb.SelectedItem.ToString();
-                        }
-                        else
-                        {
-                            values[fieldName] = "нет"; // по умолчанию
-                        }
-                    }
-                    else if (cmb.SelectedIndex <= 0) // "(не выбрано)" для FK
-                    {
-                        values[fieldName] = DBNull.Value;
+                        values[kvp.Key] = DBNull.Value;
                     }
                     else
                     {
-                        // Для FK извлекаем код из строки "1 - Название"
                         string selectedText = cmb.SelectedItem.ToString();
                         string code = selectedText.Split(new[] { " - " }, StringSplitOptions.None)[0];
-                        values[fieldName] = code;
+                        values[kvp.Key] = code;
                     }
                 }
 
                 if (isAdd)
                 {
-                    _dbHelper.InsertRecord(currentTableName, values);
-                    MessageBox.Show("Запись успешно добавлена!", "Успех",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _tableOps.AddRecord(_currentTableName, values, autoNumberColumns);
+                    ErrorHandler.ShowInfo("Запись успешно добавлена!");
                 }
                 else
                 {
-                    object keyValue = row.Cells[primaryKeyColumn].Value;
-                    values.Remove(primaryKeyColumn);
-                    _dbHelper.UpdateRecord(currentTableName, values, primaryKeyColumn, keyValue);
-                    MessageBox.Show("Запись успешно обновлена!", "Успех",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    object keyValue = row.Cells[_primaryKeyColumn].Value;
+                    _tableOps.UpdateRecord(_currentTableName, values, _primaryKeyColumn, keyValue, _primaryKeyColumn);
+                    ErrorHandler.ShowInfo("Запись успешно обновлена!");
                 }
 
                 LoadTableData();
-                ShowPanel(panelMainMenu);
+                ShowPanel(FormModes.MainMenu);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "SubmitDynamic");
             }
         }
 
@@ -1023,33 +789,36 @@ namespace PractiStudent
         {
             if (dataGridViewMain.CurrentRow == null)
             {
-                MessageBox.Show("Выберите запись для удаления!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Выберите запись для удаления!");
                 return;
             }
 
-            DialogResult result = MessageBox.Show("Вы уверены, что хотите удалить выбранную запись?",
-                "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (_currentTableName == TableConstants.TableUsers)
+            {
+                string loginToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldLogin].Value?.ToString();
+                if (!_userService.CanDeleteUser(loginToDelete, _currentUserRole))
+                {
+                    ErrorHandler.ShowWarning("НЕЛЬЗЯ УДАЛИТЬ:\n- Самого себя\n- Последнего администратора\n\nДолжен остаться хотя бы один админ!");
+                    return;
+                }
+            }
 
-            if (result == DialogResult.Yes)
+            if (ErrorHandler.AskQuestion("Вы уверены, что хотите удалить выбранную запись?"))
             {
                 try
                 {
-                    object keyValue = dataGridViewMain.CurrentRow.Cells[primaryKeyColumn].Value;
-                    _dbHelper.DeleteRecord(currentTableName, primaryKeyColumn, keyValue);
-                    MessageBox.Show("Запись удалена!", "Успех",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    object keyValue = dataGridViewMain.CurrentRow.Cells[_primaryKeyColumn].Value;
+                    _tableOps.DeleteRecord(_currentTableName, _primaryKeyColumn, keyValue);
+                    ErrorHandler.ShowInfo("Запись удалена!");
                     LoadTableData();
-                    ShowPanel(panelMainMenu);
+                    ShowPanel(FormModes.MainMenu);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ошибка удаления: {ex.Message}", "Ошибка",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ErrorHandler.Handle(ex, "Delete");
                 }
             }
         }
-
         private void BtnCreateReport_Click(object sender, EventArgs e)
         {
             ComboBox cmbFormat = FindControlInPanel(panelReport, "cmbReportFormat") as ComboBox;
@@ -1057,111 +826,37 @@ namespace PractiStudent
 
             try
             {
-                SaveFileDialog saveDialog = new SaveFileDialog();
-                if (format.Contains("Word"))
+                SaveFileDialog saveDialog = new SaveFileDialog
                 {
-                    saveDialog.Filter = "Word Document|*.doc";
-                    saveDialog.DefaultExt = ".doc";
-                }
-                else
-                {
-                    saveDialog.Filter = "Text File|*.txt";
-                    saveDialog.DefaultExt = ".txt";
-                }
-                saveDialog.FileName = $"Отчёт_{currentTableName}_{DateTime.Now:yyyyMMdd}";
+                    Filter = format.Contains("Word") ? "Word Document|*.doc" : "Text File|*.txt",
+                    DefaultExt = format.Contains("Word") ? ".doc" : ".txt",
+                    FileName = $"Отчёт_{_currentTableName}_{DateTime.Now:yyyyMMdd}"
+                };
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
                     if (format.Contains("Word"))
                     {
-                        CreateWordReport(saveDialog.FileName);
+                        ReportGenerator.CreateWordReport(_currentData, _currentTableName, _currentUserRole, saveDialog.FileName);
                     }
                     else
                     {
-                        CreateTextReport(saveDialog.FileName);
+                        ReportGenerator.CreateTextReport(_currentData, _currentTableName, _currentUserRole, saveDialog.FileName);
                     }
-                    MessageBox.Show("Отчёт успешно создан!", "Успех",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ErrorHandler.ShowInfo("Отчёт успешно создан!");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка создания отчёта: {ex.Message}", "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorHandler.Handle(ex, "CreateReport");
             }
-        }
-
-        private void CreateWordReport(string filePath)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("<html><head><meta charset='utf-8'></head><body>");
-            sb.AppendLine($"<h1>Отчёт по таблице: {currentTableName}</h1>");
-            sb.AppendLine($"<p>Дата формирования: {DateTime.Now}</p>");
-            sb.AppendLine($"<p>Пользователь: {currentUserRole}</p>");
-            sb.AppendLine("<table border='1' cellpadding='5' cellspacing='0'>");
-
-            sb.AppendLine("<tr>");
-            foreach (DataColumn col in currentData.Columns)
-            {
-                sb.AppendLine($"<th><b>{col.ColumnName}</b></th>");
-            }
-            sb.AppendLine("</tr>");
-
-            foreach (DataRow row in currentData.Rows)
-            {
-                sb.AppendLine("<tr>");
-                foreach (DataColumn col in currentData.Columns)
-                {
-                    sb.AppendLine($"<td>{row[col]}</td>");
-                }
-                sb.AppendLine("</tr>");
-            }
-
-            sb.AppendLine("</table>");
-            sb.AppendLine($"<p>Всего записей: {currentData.Rows.Count}</p>");
-            sb.AppendLine("</body></html>");
-
-            File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
-        }
-
-        private void CreateTextReport(string filePath)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"ОТЧЁТ ПО ТАБЛИЦЕ: {currentTableName}");
-            sb.AppendLine($"Дата формирования: {DateTime.Now}");
-            sb.AppendLine($"Пользователь: {currentUserRole}");
-            sb.AppendLine(new string('-', 80));
-
-            string header = "";
-            foreach (DataColumn col in currentData.Columns)
-            {
-                header += col.ColumnName.PadRight(20);
-            }
-            sb.AppendLine(header);
-            sb.AppendLine(new string('-', 80));
-
-            foreach (DataRow row in currentData.Rows)
-            {
-                string line = "";
-                foreach (DataColumn col in currentData.Columns)
-                {
-                    line += row[col].ToString().PadRight(20);
-                }
-                sb.AppendLine(line);
-            }
-
-            sb.AppendLine(new string('-', 80));
-            sb.AppendLine($"Всего записей: {currentData.Rows.Count}");
-
-            File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
         }
 
         private bool CheckTableSelected()
         {
-            if (string.IsNullOrEmpty(currentTableName))
+            if (string.IsNullOrEmpty(_currentTableName))
             {
-                MessageBox.Show("Сначала выберите таблицу!", "Внимание",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ErrorHandler.ShowWarning("Сначала выберите таблицу!");
                 return false;
             }
             return true;

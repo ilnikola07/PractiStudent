@@ -1,3 +1,5 @@
+using StudentSource;
+
 namespace PractiStudent
 {
     internal static class Program
@@ -8,6 +10,19 @@ namespace PractiStudent
         [STAThread]
         static void Main()
         {
+            // Глобальный обработчик исключений
+            Application.ThreadException += (sender, e) =>
+            {
+                ErrorHandler.Handle(e.Exception, "Global UI Exception");
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                Exception ex = e.ExceptionObject as Exception;
+                ErrorHandler.Handle(ex, "Global AppDomain Exception");
+            };
+
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 

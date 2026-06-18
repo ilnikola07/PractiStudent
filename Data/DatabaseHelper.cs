@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using Exceptions;  
 using System.Data.OleDb;
 
 namespace PractiStudent.Data
@@ -120,13 +121,13 @@ namespace PractiStudent.Data
             return ExecuteSelect(query, parameters);
         }
 
-        // Фильтрация по столбцу и значению
+        // Фильтрация по столбцу и значению (ТОЧНОЕ совпадение)
         public DataTable FilterData(string tableName, string columnName, string filterValue)
         {
             string query = $"SELECT * FROM [{tableName}] WHERE [{columnName}] = ?";
             OleDbParameter[] parameters = new OleDbParameter[]
             {
-                new OleDbParameter("?", filterValue)
+        new OleDbParameter("?", filterValue)
             };
             return ExecuteSelect(query, parameters);
         }

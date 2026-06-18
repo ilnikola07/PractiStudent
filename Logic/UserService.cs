@@ -1,5 +1,6 @@
 ﻿using System.Data.OleDb;
 using PractiStudent.Data;
+using Exceptions;  
 
 namespace Logic
 {
@@ -24,6 +25,55 @@ namespace Logic
             }
 
             return _isConnected;
+        }
+
+        public bool CanDeleteUser(string loginToDelete, string currentLoggedInUser)
+        {
+            // Нельзя удалить самого себя
+            if (loginToDelete == currentLoggedInUser)
+            {
+                return false;
+            }
+
+            // Нельзя удалить последнего админа
+            // ИСПРАВЛЕНО: добавлены квадратные скобки вокруг имен полей
+            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ? AND [Логин] != ?";
+            OleDbParameter[] parameters = new OleDbParameter[]
+            {
+        new OleDbParameter("?", "Администратор"),
+        new OleDbParameter("?", loginToDelete)
+            };
+
+            try
+            {
+                int adminCount = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
+                return adminCount > 0; // Можно удалять только если есть другие админы
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка проверки админов: {ex.Message}");
+                return false; // В случае ошибки запрещаем удаление
+            }
+        }
+
+        public bool CanCreateAdmin()
+        {
+            // Ограничим максимум 3 админа
+            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ?";
+            OleDbParameter[] parameters = new OleDbParameter[]
+            {
+        new OleDbParameter("?", "Администратор")
+            };
+
+            try
+            {
+                int adminCount = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
+                return adminCount < 3;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public string GetDatabaseFileName()
