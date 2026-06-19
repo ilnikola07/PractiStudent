@@ -189,12 +189,15 @@ namespace PractiStudent
         private void LoadTableData()
         {
             if (string.IsNullOrEmpty(_currentTableName)) return;
-
             try
             {
                 _currentData = _dbHelper.GetAllData(_currentTableName);
                 DataFormatter.FormatDatesInTable(_currentData);
                 dataGridViewMain.DataSource = _currentData;
+                if (_currentTableName == TableConstants.TableUsers)
+                {
+                    dataGridViewMain.Columns["Хэш_пароля"].Visible = false;
+                }
 
                 if (_currentData.Columns.Count > 0)
                 {
@@ -527,7 +530,18 @@ namespace PractiStudent
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (CheckTableSelected()) ShowPanel(FormModes.Add);
+            if (CheckTableSelected())
+            {
+                if (_currentTableName == TableConstants.TableUsers)
+                {
+                    ErrorHandler.ShowWarning(
+                        "Добавление новых пользователей запрещено!\n\n" +
+                        "Пользователи создаются автоматически при регистрации через форму входа.");
+                    return;
+                }
+
+                ShowPanel(FormModes.Add);
+            }
         }
 
         private void BtnEdit_Click(object sender, EventArgs e)
@@ -684,6 +698,10 @@ namespace PractiStudent
 
             foreach (string col in columns)
             {
+                if (_currentTableName == TableConstants.TableUsers && col == "Хэш_пароля")
+                {
+                    continue;
+                }
                 bool isAutoNumber = autoNumberColumns.Contains(col);
                 bool isForeignKey = fkMappings.ContainsKey(col);
 
@@ -854,18 +872,53 @@ namespace PractiStudent
                 return;
             }
 
-            // Проверка для таблицы пользователей
+            // ?? Специальная проверка для таблицы Пользователи
             if (_currentTableName == TableConstants.TableUsers)
             {
-                string loginToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldLogin].Value?.ToString();
-                if (!_userService.CanDeleteUser(loginToDelete, _currentUserRole))
+                string loginToDelete = dataGridViewMain.CurrentRow.Cells["Логин"].Value?.ToString();
+                string roleToDelete = dataGridViewMain.CurrentRow.Cells["Роль"].Value?.ToString();
+
+                // Нельзя удалить самого себя
+                if (loginToDelete == _userService.GetDatabaseFileName()) // или как вы храните текущего пользователя
                 {
-                    ErrorHandler.ShowWarning("НЕЛЬЗЯ УДАЛИТЬ:\n- Самого себя\n- Последнего администратора");
+                    ErrorHandler.ShowWarning("НЕЛЬЗЯ УДАЛИТЬ:\nНельзя удалить самого себя!");
                     return;
                 }
+
+                // Нельзя удалить последнего администратора
+                if (roleToDelete == TableConstants.RoleAdmin)
+                {
+                    if (!_userService.CanDeleteUser(loginToDelete, _currentUserRole))
+                    {
+                        ErrorHandler.ShowWarning(
+                            "НЕЛЬЗЯ УДАЛИТЬ:\n\n" +
+                            "- Нельзя удалить последнего администратора\n" +
+                            "- В системе должен остаться хотя бы один админ!");
+                        return;
+                    }
+                }
+
+                if (ErrorHandler.AskQuestion(
+                    $"Вы уверены, что хотите удалить пользователя \"{loginToDelete}\"?\n\n" +
+                    $"Все данные, связанные с этим пользователем, будут удалены!"))
+                {
+                    try
+                    {
+                        object keyValue = dataGridViewMain.CurrentRow.Cells[_primaryKeyColumn].Value;
+                        _tableOps.DeleteRecord(_currentTableName, _primaryKeyColumn, keyValue);
+                        ErrorHandler.ShowInfo($"Пользователь \"{loginToDelete}\" удален!");
+                        LoadTableData();
+                        ShowPanel(FormModes.MainMenu);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorHandler.Handle(ex, "DeleteUser");
+                    }
+                }
+                return;
             }
 
-            // Определяем, нужно ли каскадное удаление
+            // Для остальных таблиц — обычное удаление с каскадом
             bool needsCascade = NeedsCascadeDelete(_currentTableName);
 
             string message = "Вы уверены, что хотите удалить выбранную запись?";
@@ -882,13 +935,11 @@ namespace PractiStudent
 
                     if (needsCascade)
                     {
-                        // КАСКАДНОЕ УДАЛЕНИЕ
                         _tableOps.DeleteWithCascade(_currentTableName, _primaryKeyColumn, keyValue);
                         ErrorHandler.ShowInfo("Запись и все связанные записи удалены!");
                     }
                     else
                     {
-                        // Обычное удаление
                         _tableOps.DeleteRecord(_currentTableName, _primaryKeyColumn, keyValue);
                         ErrorHandler.ShowInfo("Запись удалена!");
                     }
