@@ -4,7 +4,7 @@ using Exceptions;
 
 namespace Logic
 {
-    public class UserService
+    public class UserService // Класс отвечающий за регистрацию пользователей и вход
     {
         private readonly DatabaseHelper _dbHelper;
         private bool _isConnected = false;
@@ -13,9 +13,8 @@ namespace Logic
         {
             _dbHelper = new DatabaseHelper();
         }
-
-        // Метод для подключения к выбранной базе данных
-        public bool ConnectToDatabase(string filePath)
+                
+        public bool ConnectToDatabase(string filePath) // Метод для подключения к выбранной бд
         {
             _isConnected = _dbHelper.SetDatabaseConnection(filePath);
 
@@ -28,17 +27,9 @@ namespace Logic
         }
 
         public bool CanDeleteUser(string loginToDelete, string currentLoggedInUser)
-        {
-            // Нельзя удалить самого себя
-            if (loginToDelete == currentLoggedInUser)
-            {
-                return false;
-            }
-
-            // Нельзя удалить последнего админа
-            // ИСПРАВЛЕНО: добавлены квадратные скобки вокруг имен полей
+        {             
             string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ? AND [Логин] != ?";
-            OleDbParameter[] parameters = new OleDbParameter[]
+            OleDbParameter[] parameters = new OleDbParameter[] // Нельзя удалить последнего админа
             {
         new OleDbParameter("?", "Администратор"),
         new OleDbParameter("?", loginToDelete)
@@ -55,44 +46,18 @@ namespace Logic
                 return false; // В случае ошибки запрещаем удаление
             }
         }
-
-        public bool CanCreateAdmin()
-        {
-            // Ограничим максимум 3 админа
-            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ?";
-            OleDbParameter[] parameters = new OleDbParameter[]
-            {
-        new OleDbParameter("?", "Администратор")
-            };
-
-            try
-            {
-                int adminCount = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
-                return adminCount < 3;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public string GetDatabaseFileName()
         {
             return _dbHelper.DatabaseFileName;
         }
-
-        public bool IsConnected() => _isConnected;
-
         public void EnsureAdminCreated()
         {
             try
             {
                 string adminLogin = "admin";
-
                 if (!IsLoginExists(adminLogin))
                 {
                     string passwordHash = SecurityHelper.ComputeSha256Hash("admin123");
-
                     string query = "INSERT INTO Пользователи (Логин, Хэш_Пароля, Роль) VALUES (?, ?, ?)";
 
                     OleDbParameter[] parameters = new OleDbParameter[]
@@ -110,7 +75,6 @@ namespace Logic
                 System.Diagnostics.Debug.WriteLine($"Ошибка создания админа: {ex.Message}");
             }
         }
-
         public bool RegisterGuest(string login, string password)
         {
             if (IsLoginExists(login))
@@ -135,7 +99,6 @@ namespace Logic
         public string ValidateUser(string login, string password, string expectedRole)
         {
             string passwordHash = SecurityHelper.ComputeSha256Hash(password);
-
             string query = "SELECT Роль FROM Пользователи WHERE Логин = ? AND Хэш_Пароля = ? AND Роль = ?";
 
             OleDbParameter[] parameters = new OleDbParameter[]
@@ -144,7 +107,6 @@ namespace Logic
                 new OleDbParameter("?", passwordHash),
                 new OleDbParameter("?", expectedRole)
             };
-
             object result = _dbHelper.ExecuteScalar(query, parameters);
             return result?.ToString();
         }

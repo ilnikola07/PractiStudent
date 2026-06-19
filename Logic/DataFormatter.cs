@@ -7,43 +7,47 @@ namespace Logic
     {
         public static void FormatDatesInTable(DataTable table)
         {
+            if (table == null) return;
+
             foreach (DataColumn col in table.Columns)
             {
-                if (col.DataType == typeof(DateTime) ||
-                    col.ColumnName.Contains("Дата") ||
-                    col.ColumnName.Contains("дата"))
+                if (IsDateColumn(col))
                 {
                     foreach (DataRow row in table.Rows)
                     {
                         if (row[col] != DBNull.Value)
                         {
                             DateTime dt = Convert.ToDateTime(row[col]);
-                            if (dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0)
-                            {
-                                row[col] = dt.ToString("dd.MM.yyyy");
-                            }
+                            row[col] = FormatDate(dt);
                         }
                     }
                 }
             }
         }
-
         public static string FormatValueForDisplay(object value)
         {
             if (value == null || value == DBNull.Value)
                 return "";
 
-            string strValue = value.ToString();
-
-            if (DateTime.TryParse(strValue, out DateTime dt))
+            if (DateTime.TryParse(value.ToString(), out DateTime dt))
             {
-                if (dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0)
-                {
-                    return dt.ToString("dd.MM.yyyy");
-                }
-                return dt.ToString("dd.MM.yyyy HH:mm");
+                return FormatDate(dt);
             }
-            return strValue;
+
+            return value.ToString();
+        }
+        private static bool IsDateColumn(DataColumn col)
+        {
+            return col.DataType == typeof(DateTime) ||
+                   col.ColumnName.Contains("Дата", StringComparison.OrdinalIgnoreCase);
+        }
+        private static string FormatDate(DateTime dt)
+        {
+            if (dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0)
+            {
+                return dt.ToString("dd.MM.yyyy");
+            }
+            return dt.ToString("dd.MM.yyyy HH:mm");
         }
     }
 }

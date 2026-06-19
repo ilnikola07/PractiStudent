@@ -284,12 +284,6 @@ namespace PractiStudent
             string login = txtLogin.Text.Trim();
             string password = txtPassword.Text.Trim();
 
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
-            {
-                ErrorHandler.ShowWarning("Пожалуйста, заполните все поля!");
-                return;
-            }
-
             try
             {
                 string userRole = _userService.ValidateUser(login, password, role);
@@ -316,27 +310,19 @@ namespace PractiStudent
         {
             string login = txtLogin.Text.Trim();
             string password = txtPassword.Text.Trim();
+            string confirmPassword = txtConfirmPassword.Text.Trim();
 
-            if (!Validator.ValidateLogin(login, out string loginError))
+            bool isRegistration = currentMode == "Register";
+
+            var errors = Validator.ValidateCredentials(login, password, confirmPassword, isRegistration); // Проверка через единый метод валидации
+
+            if (errors.Count > 0) 
             {
-                ErrorHandler.ShowWarning(loginError);
+                ErrorHandler.ShowWarning(string.Join("\n", errors));
                 return;
             }
-
-            if (!Validator.ValidatePassword(password, out string passwordError))
+            if (isRegistration)
             {
-                ErrorHandler.ShowWarning(passwordError);
-                return;
-            }
-
-            if (currentMode == "Register")
-            {
-                string confirmPassword = txtConfirmPassword.Text.Trim();
-                if (!Validator.ValidatePasswordsMatch(password, confirmPassword, out string matchError))
-                {
-                    ErrorHandler.ShowWarning(matchError);
-                    return;
-                }
                 try
                 {
                     if (_userService.RegisterGuest(login, password))

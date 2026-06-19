@@ -1,4 +1,4 @@
-﻿namespace Logic  // НЕ PractiStudent!
+﻿namespace Logic  
 {
     public static class TableConstants
     {

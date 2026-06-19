@@ -5,47 +5,38 @@ namespace Exceptions
 {
     public static class Logger
     {
-        private static readonly string LogFilePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, "error.log");
-
+        private static readonly string LogFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error.log");
         public static void LogError(string message, Exception ex = null, string context = "")
         {
-            try
+            string logEntry = FormatLogEntry("ERROR", message, context);
+
+            if (ex != null)
             {
-                string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ERROR";
-                if (!string.IsNullOrEmpty(context))
-                    logEntry += $" [{context}]";
+                logEntry += $"\nException: {ex.Message}";
+                logEntry += $"\nStackTrace: {ex.StackTrace}";
 
-                logEntry += $": {message}";
-
-                if (ex != null)
+                if (ex.InnerException != null)
                 {
-                    logEntry += $"\nException: {ex.Message}";
-                    logEntry += $"\nStackTrace: {ex.StackTrace}";
-
-                    if (ex.InnerException != null)
-                    {
-                        logEntry += $"\nInnerException: {ex.InnerException.Message}";
-                    }
+                    logEntry += $"\nInnerException: {ex.InnerException.Message}";
                 }
-
-                File.AppendAllText(LogFilePath, logEntry + Environment.NewLine + Environment.NewLine);
             }
-            catch { /* Игнорируем ошибки логирования */ }
-        }
 
-        public static void LogInfo(string message, string context = "")
+            WriteLog(logEntry);
+        }
+        private static string FormatLogEntry(string level, string message, string context)
+        {
+            string entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {level}";
+            if (!string.IsNullOrEmpty(context))
+                entry += $" [{context}]";
+            return entry + $": {message}";
+        }
+        private static void WriteLog(string logEntry)
         {
             try
             {
-                string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] INFO";
-                if (!string.IsNullOrEmpty(context))
-                    logEntry += $" [{context}]";
-                logEntry += $": {message}";
-
                 File.AppendAllText(LogFilePath, logEntry + Environment.NewLine);
             }
-            catch { }
+            catch { /* Игнорируем ошибки логирования */ }
         }
     }
 }

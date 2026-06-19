@@ -1,40 +1,34 @@
 ﻿public static class Validator
 {
-    public static bool ValidateLogin(string login, out string error)
+    public static List<string> ValidateCredentials(string login,string password,string confirmPassword = null,bool isRegistration = false)
     {
+        var errors = new List<string>();
+
         if (string.IsNullOrWhiteSpace(login))
         {
-            error = "Логин не может быть пустым";
-            return false;
+            errors.Add("Логин не может быть пустым");
         }
-        if (login.Length < 3 || login.Length > 50)
+        else if (login.Length < 3 || login.Length > 50)
         {
-            error = "Логин должен быть от 3 до 50 символов";
-            return false;
+            errors.Add("Логин должен быть от 3 до 50 символов");
         }
-        error = null;
-        return true;
-    }
 
-    public static bool ValidatePassword(string password, out string error)
-    {
         if (string.IsNullOrWhiteSpace(password))
         {
-            error = "Пароль не может быть пустым";
-            return false;
+            errors.Add("Пароль не может быть пустым");
         }
-        error = null;
-        return true;
-    }
 
-    public static bool ValidatePasswordsMatch(string password, string confirmPassword, out string error)
-    {
-        if (password != confirmPassword)
+        if (isRegistration)
         {
-            error = "Пароли не совпадают";
-            return false;
+            if (string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                errors.Add("Подтверждение пароля не может быть пустым");
+            }
+            else if (password != confirmPassword)
+            {
+                errors.Add("Пароли не совпадают");
+            }
         }
-        error = null;
-        return true;
+        return errors;
     }
 }

@@ -2,11 +2,6 @@
 {
     public static class FormModes
     {
-        //// Для FormLogin
-        //public const string Register = "Register";
-        //public const string LoginGuest = "LoginGuest";
-        //public const string LoginAdmin = "LoginAdmin";
-
         // Для FormMain (панели действий)
         public const string MainMenu = "MainMenu";
         public const string Search = "Search";

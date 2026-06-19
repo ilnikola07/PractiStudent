@@ -1,10 +1,9 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Logic
 {
-    public static class SecurityHelper
+    public static class SecurityHelper // Класс для хеширования паролей
     {
         public static string ComputeSha256Hash(string rawData)
         {

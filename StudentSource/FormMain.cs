@@ -924,7 +924,7 @@ namespace PractiStudent
             string message = "Вы уверены, что хотите удалить выбранную запись?";
             if (needsCascade)
             {
-                message += $"\n\n?? ВНИМАНИЕ:\n{GetCascadeWarning(_currentTableName)}\n\nВсе связанные записи будут УДАЛЕНЫ!";
+                message += $"\n\n ВНИМАНИЕ:\n{GetCascadeWarning(_currentTableName)}\n\nВсе связанные записи будут УДАЛЕНЫ!";
             }
 
             if (ErrorHandler.AskQuestion(message))

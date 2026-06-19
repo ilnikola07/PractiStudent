@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Windows.Forms;
-using Exceptions;  
+using Exceptions;
 
 namespace StudentSource
 {
-    public static class ErrorHandler
+    public static class ErrorHandler // Классс обработчик всех сообщений и ошибок в приложении
     {
-        public static void Handle(Exception ex, string context = "")
+        public static void Handle(Exception ex, string context = "") // Обработка исключений, используется в блоках catch
         {
             Logger.LogError(ex.Message, ex, context);
 
@@ -22,31 +22,29 @@ namespace StudentSource
             }
             else if (ex is DatabaseException de)
             {
-                message = $"Ошибка базы данных{(!string.IsNullOrEmpty(de.TableName) ? $" ({de.TableName})" : "")}\n\n{de.Message}";
+                string tableName = string.IsNullOrEmpty(de.TableName) ? "" : $" ({de.TableName})";
+                message = $"Ошибка базы данных{tableName}\n\n{de.Message}";
                 title = "Ошибка БД";
             }
-            else if (ex is AuthenticationException ae)
+            else if (ex is AuthenticationException)
             {
-                message = $"Ошибка авторизации:\n\n{ae.Message}";
+                message = $"Ошибка авторизации:\n\n{ex.Message}";
                 title = "Ошибка входа";
             }
 
             MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
         }
-
-        public static void ShowInfo(string message, string title = "Информация")
+        public static void ShowInfo(string message)
         {
-            MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(message, "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-
-        public static void ShowWarning(string message, string title = "Предупреждение")
+        public static void ShowWarning(string message)
         {
-            MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(message, "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
-
-        public static bool AskQuestion(string message, string title = "Подтверждение")
+        public static bool AskQuestion(string message)
         {
-            return MessageBox.Show(message, title,
+            return MessageBox.Show(message, "Подтверждение",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
         }
     }
