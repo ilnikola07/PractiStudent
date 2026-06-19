@@ -248,6 +248,36 @@ namespace PractiStudent.Data
             }
         }
 
+        public List<string> GetUniqueColumns(string tableName)
+        {
+            List<string> uniqueColumns = new List<string>();
+
+            using (OleDbConnection conn = new OleDbConnection(_connectionString))
+            {
+                conn.Open();
+                var schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Indexes,
+                    new object[] { null, null, tableName, null });
+
+                if (schema != null)
+                {
+                    foreach (DataRow row in schema.Rows)
+                    {
+                        bool isUnique = Convert.ToBoolean(row["UNIQUE"]);
+                        if (isUnique)
+                        {
+                            string columnName = row["COLUMN_NAME"].ToString();
+                            if (!uniqueColumns.Contains(columnName))
+                            {
+                                uniqueColumns.Add(columnName);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return uniqueColumns;
+        }
+
         public void DeleteWithCascade(string tableName, string keyColumn, object keyValue,
     Dictionary<string, string> relatedTables)
         {

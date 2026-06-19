@@ -43,7 +43,6 @@ namespace Logic
                 }
                 return dt.ToString("dd.MM.yyyy HH:mm");
             }
-
             return strValue;
         }
     }

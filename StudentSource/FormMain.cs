@@ -1,9 +1,11 @@
+using Exceptions;
 using Logic;
 using PractiStudent.Data;
 using StudentSource;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.OleDb;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -376,27 +378,19 @@ namespace PractiStudent
             panelFilter.Controls.Add(PanelBuilder.CreateLabel("Поле для фильтрации:", new Point(0, y), true));
             ComboBox cmbColumn = PanelBuilder.CreateComboBox(new Point(0, y + 23));
             cmbColumn.Name = "cmbFilterColumn";
-            cmbColumn.SelectedIndexChanged += CmbFilterColumn_SelectedIndexChanged;
+            cmbColumn.SelectedIndexChanged += CmbFilterColumn_SelectedIndexChanged;  
             panelFilter.Controls.Add(cmbColumn);
 
             panelFilter.Controls.Add(PanelBuilder.CreateLabel("Значение:", new Point(0, y + 60), true));
-            TextBox txtValue = PanelBuilder.CreateTextBox(new Point(0, y + 83));
-            txtValue.Name = "txtFilterValue";
-            panelFilter.Controls.Add(txtValue);
 
-            Label lblHint = new Label
-            {
-                Text = UIStyles.FilterHint,
-                Font = UIStyles.HintFont,
-                ForeColor = UIStyles.HintColor,
-                Location = new Point(0, y + 110),
-                Size = new Size(280, 15)
-            };
-            panelFilter.Controls.Add(lblHint);
+            ComboBox cmbValue = PanelBuilder.CreateComboBox(new Point(0, y + 83));
+            cmbValue.Name = "cmbFilterValue";
+            cmbValue.Items.Add("(все значения)");  // Первый элемент - показать все
+            panelFilter.Controls.Add(cmbValue);
 
-            panelFilter.Controls.Add(PanelBuilder.CreateButton("Применить фильтр", new Point(0, y + 135), UIStyles.SuccessButton, BtnApplyFilter_Click));
-            panelFilter.Controls.Add(PanelBuilder.CreateButton("Сбросить фильтр", new Point(0, y + 185), UIStyles.PrimaryButton, BtnShowAll_Click));
-            panelFilter.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 290), UIStyles.NeutralButton, BtnBackToMenu_Click));
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Применить фильтр", new Point(0, y + 120), UIStyles.SuccessButton, BtnApplyFilter_Click));
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Сбросить фильтр", new Point(0, y + 170), UIStyles.PrimaryButton, BtnShowAll_Click));
+            panelFilter.Controls.Add(PanelBuilder.CreateButton("Вернуться назад", new Point(0, y + 275), UIStyles.NeutralButton, BtnBackToMenu_Click));
         }
 
         private void CreateSortPanel()
@@ -476,7 +470,35 @@ namespace PractiStudent
 
         private void CmbFilterColumn_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Для будущей функциональности - загрузка уникальных значений
+            ComboBox cmbColumn = sender as ComboBox;
+            if (cmbColumn == null || cmbColumn.SelectedItem == null) return;
+
+            ComboBox cmbValue = FindControlInPanel(panelFilter, "cmbFilterValue") as ComboBox;
+            if (cmbValue == null) return;
+
+            try
+            {
+                string columnName = cmbColumn.SelectedItem.ToString();
+                List<string> values = _dbHelper.GetDistinctValues(_currentTableName, columnName);
+
+                cmbValue.Items.Clear();
+                cmbValue.Items.Add("(все значения)");
+
+                foreach (string val in values)
+                {
+                    if (!string.IsNullOrEmpty(val))
+                    {
+                        string displayValue = DataFormatter.FormatValueForDisplay(val);
+                        cmbValue.Items.Add(displayValue);
+                    }
+                }
+
+                cmbValue.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Ошибка загрузки значений для фильтра: {ex.Message}", ex, "CmbFilterColumn_SelectedIndexChanged");
+            }
         }
 
         private Control FindControlInPanel(Panel panel, string name)
@@ -570,18 +592,28 @@ namespace PractiStudent
         private void BtnApplyFilter_Click(object sender, EventArgs e)
         {
             ComboBox cmbColumn = FindControlInPanel(panelFilter, "cmbFilterColumn") as ComboBox;
-            TextBox txtValue = FindControlInPanel(panelFilter, "txtFilterValue") as TextBox;
+            ComboBox cmbValue = FindControlInPanel(panelFilter, "cmbFilterValue") as ComboBox;  // 
 
-            if (cmbColumn == null || txtValue == null) return;
-            if (string.IsNullOrWhiteSpace(txtValue.Text))
+            if (cmbColumn == null || cmbValue == null) return;
+
+            // Если выбрано "(все значения)" - показываем все
+            if (cmbValue.SelectedIndex == 0)
             {
-                ErrorHandler.ShowWarning("Введите значение для фильтрации!");
+                LoadTableData();
+                return;
+            }
+
+            string filterText = cmbValue.SelectedItem?.ToString();
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                ErrorHandler.ShowWarning("Выберите значение для фильтрации!");
                 return;
             }
 
             try
             {
-                _currentData = _tableOps.Filter(_currentTableName, cmbColumn.SelectedItem.ToString(), txtValue.Text.Trim(), false);
+                // ТОЧНАЯ фильтрация
+                _currentData = _tableOps.Filter(_currentTableName, cmbColumn.SelectedItem.ToString(), filterText);
                 dataGridViewMain.DataSource = _currentData;
             }
             catch (Exception ex)
@@ -735,8 +767,8 @@ namespace PractiStudent
         }
 
         private void BtnSubmitDynamic_Click(object sender, EventArgs e,
-            Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes,
-            bool isAdd, DataGridViewRow row)
+     Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes,
+     bool isAdd, DataGridViewRow row)
         {
             try
             {
@@ -758,14 +790,43 @@ namespace PractiStudent
                     }
                     else
                     {
-                        string selectedText = cmb.SelectedItem.ToString();
-                        string code = selectedText.Split(new[] { " - " }, StringSplitOptions.None)[0];
-                        values[kvp.Key] = code;
+                        string selectedText = cmb.SelectedItem?.ToString();
+                        if (!string.IsNullOrEmpty(selectedText) && selectedText.Contains(" - "))
+                        {
+                            string code = selectedText.Split(new[] { " - " }, StringSplitOptions.None)[0];
+                            values[kvp.Key] = code;
+                        }
+                        else
+                        {
+                            values[kvp.Key] = string.IsNullOrEmpty(selectedText) ? DBNull.Value : (object)selectedText;
+                        }
                     }
                 }
 
                 if (isAdd)
                 {
+                    // ПРОВЕРКА: есть ли дубликаты в уникальных полях
+                    var uniqueColumns = _dbHelper.GetUniqueColumns(_currentTableName);
+
+                    foreach (var uniqueCol in uniqueColumns)
+                    {
+                        if (values.ContainsKey(uniqueCol) && values[uniqueCol] != DBNull.Value)
+                        {
+                            // Проверяем, есть ли уже такая запись
+                            string checkQuery = $"SELECT COUNT(*) FROM [{_currentTableName}] WHERE [{uniqueCol}] = ?";
+                            int count = Convert.ToInt32(_dbHelper.ExecuteScalar(checkQuery,
+                                new OleDbParameter[] { new OleDbParameter("?", values[uniqueCol]) }));
+
+                            if (count > 0)
+                            {
+                                ErrorHandler.ShowWarning(
+                                    $"Значение поля \"{uniqueCol}\" уже существует!\n\n" +
+                                    $"Измените значение и попробуйте снова.");
+                                return;
+                            }
+                        }
+                    }
+
                     _tableOps.AddRecord(_currentTableName, values, autoNumberColumns);
                     ErrorHandler.ShowInfo("Запись успешно добавлена!");
                 }
@@ -793,23 +854,45 @@ namespace PractiStudent
                 return;
             }
 
+            // Проверка для таблицы пользователей
             if (_currentTableName == TableConstants.TableUsers)
             {
                 string loginToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldLogin].Value?.ToString();
                 if (!_userService.CanDeleteUser(loginToDelete, _currentUserRole))
                 {
-                    ErrorHandler.ShowWarning("НЕЛЬЗЯ УДАЛИТЬ:\n- Самого себя\n- Последнего администратора\n\nДолжен остаться хотя бы один админ!");
+                    ErrorHandler.ShowWarning("НЕЛЬЗЯ УДАЛИТЬ:\n- Самого себя\n- Последнего администратора");
                     return;
                 }
             }
 
-            if (ErrorHandler.AskQuestion("Вы уверены, что хотите удалить выбранную запись?"))
+            // Определяем, нужно ли каскадное удаление
+            bool needsCascade = NeedsCascadeDelete(_currentTableName);
+
+            string message = "Вы уверены, что хотите удалить выбранную запись?";
+            if (needsCascade)
+            {
+                message += $"\n\n?? ВНИМАНИЕ:\n{GetCascadeWarning(_currentTableName)}\n\nВсе связанные записи будут УДАЛЕНЫ!";
+            }
+
+            if (ErrorHandler.AskQuestion(message))
             {
                 try
                 {
                     object keyValue = dataGridViewMain.CurrentRow.Cells[_primaryKeyColumn].Value;
-                    _tableOps.DeleteRecord(_currentTableName, _primaryKeyColumn, keyValue);
-                    ErrorHandler.ShowInfo("Запись удалена!");
+
+                    if (needsCascade)
+                    {
+                        // КАСКАДНОЕ УДАЛЕНИЕ
+                        _tableOps.DeleteWithCascade(_currentTableName, _primaryKeyColumn, keyValue);
+                        ErrorHandler.ShowInfo("Запись и все связанные записи удалены!");
+                    }
+                    else
+                    {
+                        // Обычное удаление
+                        _tableOps.DeleteRecord(_currentTableName, _primaryKeyColumn, keyValue);
+                        ErrorHandler.ShowInfo("Запись удалена!");
+                    }
+
                     LoadTableData();
                     ShowPanel(FormModes.MainMenu);
                 }
@@ -818,6 +901,36 @@ namespace PractiStudent
                     ErrorHandler.Handle(ex, "Delete");
                 }
             }
+        }
+
+        // Вспомогательные методы
+        private bool NeedsCascadeDelete(string tableName)
+        {
+            // Каскадное удаление для справочников
+            return tableName == TableConstants.TableFaculties ||
+                   tableName == TableConstants.TableSpecialties ||
+                   tableName == TableConstants.TableSpecializations ||
+                   tableName == TableConstants.TableSchools;
+        }
+
+        private string GetCascadeWarning(string tableName)
+        {
+            return tableName switch
+            {
+                TableConstants.TableFaculties =>
+                    "Будут удалены:\n- Все специальности факультета\n- Все специализации\n- Все абитуриенты",
+
+                TableConstants.TableSpecialties =>
+                    "Будут удалены:\n- Все специализации специальности\n- Все абитуриенты",
+
+                TableConstants.TableSpecializations =>
+                    "Будут удалены:\n- Все абитуриенты этой специализации",
+
+                TableConstants.TableSchools =>
+                    "Будут удалены:\n- Все абитуриенты этой школы",
+
+                _ => null
+            };
         }
         private void BtnCreateReport_Click(object sender, EventArgs e)
         {
