@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-namespace Logic
+namespace PractiStudent.Data
 {
     public static class DataFormatter
     {

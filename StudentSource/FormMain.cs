@@ -561,10 +561,13 @@ namespace PractiStudent
         }
         private void BtnExit_Click(object sender, EventArgs e)
         {
+            ForceCleanupComResources();
             Application.Exit();
         }
+
         private void BtnLogout_Click(object sender, EventArgs e)
         {
+            ForceCleanupComResources();
             this.Close();
         }
         private void BtnBackToMenu_Click(object sender, EventArgs e)
@@ -684,6 +687,11 @@ namespace PractiStudent
             List<string> autoNumberColumns, Dictionary<string, string> fkMappings,
             Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes, ref int y)
         {
+            if (_currentTableName == TableConstants.TableUsers && col == TableConstants.FieldRole)
+            {
+                CreateReadOnlyRoleField(panel, col, row, isAdd, textBoxes, ref y);
+                return;
+            }
             if (autoNumberColumns.Contains(col))
             {
                 CreateAutoNumberField(panel, col, row, isAdd, textBoxes, ref y);
@@ -696,6 +704,26 @@ namespace PractiStudent
             {
                 CreateRegularField(panel, col, row, isAdd, textBoxes, ref y);
             }
+        }
+        private void CreateReadOnlyRoleField(Panel panel, string col, DataGridViewRow row, bool isAdd,
+    Dictionary<string, TextBox> textBoxes, ref int y)
+        {
+            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
+            txt.Name = "txt_" + col;
+            txt.ReadOnly = true;
+            txt.BackColor = Color.FromArgb(240, 240, 240);  // Серый фон (неактивное)
+
+            if (!isAdd && row != null && row.Cells[col].Value != null)
+            {
+                txt.Text = row.Cells[col].Value.ToString();
+            }
+            else
+            {
+                txt.Text = TableConstants.RoleGuest;  // По умолчанию Гость
+            }
+
+            textBoxes[col] = txt;
+            panel.Controls.Add(txt);
         }
         private void CreateAutoNumberField(Panel panel, string col, DataGridViewRow row, bool isAdd,
       Dictionary<string, TextBox> textBoxes, ref int y)
@@ -807,6 +835,7 @@ namespace PractiStudent
                 }
                 LoadTableData();
                 ShowPanel(FormModes.MainMenu);
+                ForceCleanupComResources();
             }
             catch (Exception ex)
             {
@@ -894,23 +923,32 @@ namespace PractiStudent
             object keyValue = row.Cells[_primaryKeyColumn].Value;
             _tableOps.UpdateRecord(_currentTableName, values, _primaryKeyColumn, keyValue, _primaryKeyColumn);
             ErrorHandler.ShowInfo("Запись успешно обновлена!");
-        }        
-        private void BtnDoDelete_Click(object sender, EventArgs e) // Обработчик удаления записи
+        }
+        private void BtnDoDelete_Click(object sender, EventArgs e)
         {
             if (dataGridViewMain.CurrentRow == null)
             {
                 ErrorHandler.ShowWarning("Выберите запись для удаления!");
                 return;
             }
-            if (_currentTableName == TableConstants.TableUsers)
+            try
             {
-                DeleteUser();
+                if (_currentTableName == TableConstants.TableUsers)
+                {
+                    DeleteUser();
+                }
+                else
+                {
+                    DeleteRecordWithCascade();
+                }
+                ForceCleanupComResources();
             }
-            else
+            catch (Exception ex)
             {
-                DeleteRecordWithCascade();
+                ForceCleanupComResources(); 
+                ErrorHandler.Handle(ex, "Delete");
             }
-        }        
+        }
         private void DeleteUser() // Удаление пользователя
         {
             string loginToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldLogin].Value?.ToString();
@@ -1060,6 +1098,16 @@ namespace PractiStudent
                 return false;
             }
             return true;
+        }        
+        private void ForceCleanupComResources() // Принудительная очистка COM-ресурсов
+        {
+            try
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+            catch { }
         }
     }
 }

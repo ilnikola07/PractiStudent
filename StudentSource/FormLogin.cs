@@ -379,8 +379,20 @@ namespace PractiStudent
             this.Hide();
             FormMain mainForm = new FormMain(userRole, null, _userService.GetDatabaseFileName(), _userService);
             mainForm.ShowDialog();
+            ForceCleanupComResources();
             this.Show();
-        }        
+        }
+        private void ForceCleanupComResources()
+        {
+            try
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                System.Threading.Thread.Sleep(100);
+            }
+            catch { }
+        }
         private void ShowLoginError(string role) // Показ сообщения об ошибке входа
         {
             ErrorHandler.ShowWarning($"Неверный логин или пароль для {role.ToLower()}!");
