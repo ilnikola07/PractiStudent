@@ -3,7 +3,7 @@ using System.Data;
 
 namespace PractiStudent.Data
 {
-    public static class DataFormatter
+    public static class DataFormatter // класс форматирования даты
     {
         public static void FormatDatesInTable(DataTable table)
         {

@@ -4,9 +4,9 @@ using Exceptions;
 
 namespace StudentSource
 {
-    public static class ErrorHandler // Классс обработчик всех сообщений и ошибок в приложении
+    public static class ErrorHandler // классс обработчик всех сообщений и ошибок в приложении
     {
-        public static void Handle(Exception ex, string context = "") // Обработка исключений, используется в блоках catch
+        public static void Handle(Exception ex, string context = "") // обработка исключений, используется в блоках catch
         {
             Logger.LogError(ex.Message, ex, context);
 

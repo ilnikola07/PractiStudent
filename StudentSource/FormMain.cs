@@ -22,11 +22,11 @@ namespace PractiStudent
         private DataTable _currentData;
         private string _primaryKeyColumn = "";
                 
-        private ComboBox cmbTables; // Интерфейса элементы
+        private ComboBox cmbTables; // интерфейса элементы
         private Label lblTableSelect;
         private Label lblConnectionInfo;
                 
-        private Panel panelMainMenu; // Панели действий
+        private Panel panelMainMenu; // панели действий
         private Panel panelSearch;
         private Panel panelFilter;
         private Panel panelSort;
@@ -39,7 +39,7 @@ namespace PractiStudent
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.ClassStyle |= 0x200; // Убирает крестик
+                cp.ClassStyle |= 0x200; // убрать крестик
                 return cp;
             }
         }
@@ -65,7 +65,7 @@ namespace PractiStudent
             CreateAllActionPanels();
             ShowPanel(FormModes.MainMenu);
         }        
-        private void ConfigureForm() // Настройка внешнего вида формы
+        private void ConfigureForm() // настройка внешнего вида формы
         {
             this.Text = _currentUserRole == TableConstants.RoleAdmin
                 ? UIStyles.MainFormTitleAdmin
@@ -77,7 +77,7 @@ namespace PractiStudent
             this.MinimizeBox = UIStyles.AllowMinimize;
             this.BackColor = UIStyles.Background;
         }        
-        private void InitializeDataGridView() // Настройка DataGridView
+        private void InitializeDataGridView() // настройка DataGridView
         {
             dataGridViewMain.ScrollBars = ScrollBars.Both;
             dataGridViewMain.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -100,7 +100,7 @@ namespace PractiStudent
             dataGridViewMain.BorderStyle = BorderStyle.None;
             dataGridViewMain.EnableHeadersVisualStyles = false;
         }        
-        private void InitializeConnectionIndicator() // Создание индикатора подключения
+        private void InitializeConnectionIndicator() // создание индикатора подключения
         {
             lblConnectionInfo = new Label
             {
@@ -114,7 +114,7 @@ namespace PractiStudent
             splitContainer1.Panel1.Controls.Add(lblConnectionInfo);
             lblConnectionInfo.BringToFront();
         }        
-        private void InitializeLeftPanel() // Инициализация левой панели с выбором таблицы
+        private void InitializeLeftPanel() // инициализация левой панели с выбором таблицы
         {
             lblTableSelect = PanelBuilder.CreateLabel("Выберите таблицу:", UIStyles.TableSelectLabelPosition, true);
             cmbTables = PanelBuilder.CreateComboBox(UIStyles.TableSelectComboPosition);
@@ -124,7 +124,7 @@ namespace PractiStudent
             splitContainer1.Panel1.Controls.Add(lblTableSelect);
             splitContainer1.Panel1.Controls.Add(cmbTables);
         }        
-        private void LoadTablesIntoComboBox() // Загрузка списка таблиц в ComboBox
+        private void LoadTablesIntoComboBox() // загрузка списка таблиц в ComboBox
         {
             try
             {
@@ -144,7 +144,7 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "LoadTables");
             }
         }        
-        private bool ShouldAddTableToComboBox(string table) // Проверка, нужно ли добавлять таблицу в список
+        private bool ShouldAddTableToComboBox(string table) // проверка, нужно ли добавлять таблицу в список
         {
             if (table.Equals(TableConstants.TableUsers, StringComparison.OrdinalIgnoreCase))
             {
@@ -152,7 +152,7 @@ namespace PractiStudent
             }
             return true;
         }        
-        private void SelectFirstTableOrDefault() // Выбор первой таблицы или показ сообщения
+        private void SelectFirstTableOrDefault() // выбор первой таблицы или показ сообщения
         {
             if (cmbTables.Items.Count > 0)
             {
@@ -163,7 +163,7 @@ namespace PractiStudent
                 ErrorHandler.ShowInfo("Нет доступных таблиц для просмотра.");
             }
         }        
-        private void CmbTables_SelectedIndexChanged(object sender, EventArgs e) // Обработчик изменения выбранной таблицы
+        private void CmbTables_SelectedIndexChanged(object sender, EventArgs e) // обработчик изменения выбранной таблицы
         {
             if (cmbTables.SelectedItem != null)
             {
@@ -173,7 +173,7 @@ namespace PractiStudent
                 ShowPanel(FormModes.MainMenu);
             }
         }        
-        private void LoadTableData() // Загрузка данных выбранной таблицы
+        private void LoadTableData() // загрузка данных выбранной таблицы
         {
             if (string.IsNullOrEmpty(_currentTableName)) 
                 return;
@@ -190,21 +190,21 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "LoadTableData");
             }
         }        
-        private void HidePasswordColumnIfNeeded() // Скрытие столбца с хэшем пароля для таблицы пользователей
+        private void HidePasswordColumnIfNeeded() // скрытие столбца с хэшем пароля для таблицы пользователей
         {
             if (_currentTableName == TableConstants.TableUsers)
             {
                 dataGridViewMain.Columns[TableConstants.FieldPasswordHash].Visible = false;
             }
         }        
-        private void SetPrimaryKeyColumn() // Установка имени первичного ключа
+        private void SetPrimaryKeyColumn() // установка имени первичного ключа
         {
             if (_currentData.Columns.Count > 0)
             {
                 _primaryKeyColumn = _currentData.Columns[0].ColumnName;
             }
         }        
-        private void CreateAllActionPanels() // Создание всех панелей действий
+        private void CreateAllActionPanels() // создание всех панелей действий
         {
             panelMainMenu = CreatePanel(FormModes.MainMenu);
             CreateMainMenuButtons();
@@ -223,20 +223,20 @@ namespace PractiStudent
             panelReport = CreatePanel(FormModes.Report);
             CreateReportPanel();
         }
-        private Panel CreatePanel(string mode) // Создание панели
+        private Panel CreatePanel(string mode) // создание панели
         {
             Panel panel = PanelBuilder.CreateActionPanel(UIStyles.ActionPanelTop, 700); 
             splitContainer1.Panel1.Controls.Add(panel);
             return panel;
         }
-        private void ShowPanel(string mode) // Показ выбранной панели
+        private void ShowPanel(string mode) // показ выбранной панели
         {
             HideAllPanels();
             RebuildPanel(mode);
             GetPanelByMode(mode).Visible = true;
             PopulateColumnComboBoxes();
         }        
-        private void HideAllPanels() // Скрытие всех панелей
+        private void HideAllPanels() // скрытие всех панелей
         {
             foreach (Control ctrl in splitContainer1.Panel1.Controls)
             {
@@ -247,7 +247,7 @@ namespace PractiStudent
                 }
             }
         }        
-        private Panel GetPanelByMode(string mode) // Получение панели по режиму
+        private Panel GetPanelByMode(string mode) // получение панели по режиму
         {
             return mode switch
             {
@@ -262,7 +262,7 @@ namespace PractiStudent
                 _ => panelMainMenu
             };
         }        
-        private void RebuildPanel(string mode) // Перестроение содержимого панели
+        private void RebuildPanel(string mode) // перестроение содержимого панели
         {
             switch (mode)
             {
@@ -295,13 +295,13 @@ namespace PractiStudent
                     break;
             }
         }       
-        private void ClearActionPanels()  // Очистка панелей 
+        private void ClearActionPanels()  // очистка панелей 
         {
             panelAdd?.Controls.Clear();
             panelEdit?.Controls.Clear();
             panelDelete?.Controls.Clear();
         }        
-        private void CreateMainMenuButtons() // Создание кнопок главного меню
+        private void CreateMainMenuButtons() // создание кнопок главного меню
         {
             panelMainMenu.Controls.Clear();
             int y = UIStyles.ActionButtonPosition.Y;
@@ -322,12 +322,12 @@ namespace PractiStudent
             AddMainMenuButton("Выйти из приложения", ref y, UIStyles.DangerButton, BtnExit_Click);
             AddMainMenuButton("Выйти из аккаунта", ref y, UIStyles.NeutralButton, BtnLogout_Click);
         }        
-        private void AddMainMenuButton(string text, ref int y, Color backColor, EventHandler click) // Добавление кнопки в главное меню
+        private void AddMainMenuButton(string text, ref int y, Color backColor, EventHandler click) // добавление кнопки в главное меню
         {
             panelMainMenu.Controls.Add(PanelBuilder.CreateButton(text, new Point(0, y), backColor, click));
             y += UIStyles.ButtonVerticalSpacing;
         }       
-        private void CreateSearchPanel() // Создание панели поиска
+        private void CreateSearchPanel() // создание панели поиска
         {
             panelSearch.Controls.Clear();
             int y = 5;
@@ -342,7 +342,7 @@ namespace PractiStudent
             AddButtonToPanel(panelSearch, "Показать все", ref y, UIStyles.PrimaryButton, BtnShowAll_Click);
             AddButtonToPanel(panelSearch, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
         }        
-        private void CreateFilterPanel()// Создание панели фильтрации
+        private void CreateFilterPanel()// создание панели фильтрации
         {
             panelFilter.Controls.Clear();
             int y = 5;
@@ -359,7 +359,7 @@ namespace PractiStudent
             AddButtonToPanel(panelFilter, "Сбросить фильтр", ref y, UIStyles.PrimaryButton, BtnShowAll_Click);
             AddButtonToPanel(panelFilter, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
         }        
-        private void CreateSortPanel() // Создание панели сортировки
+        private void CreateSortPanel() // создание панели сортировки
         {
             panelSort.Controls.Clear();
             int y = 5;
@@ -372,7 +372,7 @@ namespace PractiStudent
             AddButtonToPanel(panelSort, "Сбросить сортировку", ref y, UIStyles.PrimaryButton, BtnShowAll_Click);
             AddButtonToPanel(panelSort, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
         }        
-        private void CreateDeletePanel() // Создание панели удаления
+        private void CreateDeletePanel() // создание панели удаления
         {
             panelDelete.Controls.Clear();
             int y = 5;
@@ -382,7 +382,7 @@ namespace PractiStudent
             AddButtonToPanel(panelDelete, "Удалить выбранную запись", ref y, UIStyles.DangerButton, BtnDoDelete_Click);
             AddButtonToPanel(panelDelete, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
         }        
-        private void CreateReportPanel() // Создание панели отчётов
+        private void CreateReportPanel() // создание панели отчётов
         {
             panelReport.Controls.Clear();
             int y = 5;
@@ -398,12 +398,12 @@ namespace PractiStudent
             AddButtonToPanel(panelReport, "Сформировать отчёт", ref y, UIStyles.SuccessButton, BtnCreateReport_Click);
             AddButtonToPanel(panelReport, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
         }        
-        private void AddLabelToPanel(Panel panel, string text, ref int y, bool bold) // Добавление метки на панель
+        private void AddLabelToPanel(Panel panel, string text, ref int y, bool bold) // добавление метки на панель
         {
             panel.Controls.Add(PanelBuilder.CreateLabel(text, new Point(0, y), bold));
             y += 23;
         }        
-        private ComboBox AddComboBoxToPanel(Panel panel, string name, ref int y) // Добавление ComboBox на панель
+        private ComboBox AddComboBoxToPanel(Panel panel, string name, ref int y) // добавление ComboBox на панель
         {
             ComboBox cmb = PanelBuilder.CreateComboBox(new Point(0, y));
             cmb.Name = name;
@@ -411,7 +411,7 @@ namespace PractiStudent
             y += 37;
             return cmb;
         }        
-        private TextBox AddTextBoxToPanel(Panel panel, string name, ref int y) // Добавление TextBox на панель
+        private TextBox AddTextBoxToPanel(Panel panel, string name, ref int y) // добавление TextBox на панель
         {
             TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
             txt.Name = name;
@@ -419,12 +419,12 @@ namespace PractiStudent
             y += 37;
             return txt;
         }        
-        private void AddButtonToPanel(Panel panel, string text, ref int y, Color backColor, EventHandler click) // Добавление кнопки на панель
+        private void AddButtonToPanel(Panel panel, string text, ref int y, Color backColor, EventHandler click) // добавление кнопки на панель
         {
             panel.Controls.Add(PanelBuilder.CreateButton(text, new Point(0, y), backColor, click));
             y += 50;
         }       
-        private void PopulateColumnComboBoxes() // Заполнение ComboBox названиями столбцов
+        private void PopulateColumnComboBoxes() // заполнение ComboBox названиями столбцов
         {
             if (string.IsNullOrEmpty(_currentTableName)) 
                 return;
@@ -442,7 +442,7 @@ namespace PractiStudent
             }
             catch { }
         }        
-        private void PopulateComboBoxesInPanel(Panel panel, List<string> columns) // Заполнение ComboBox в конкретной панели
+        private void PopulateComboBoxesInPanel(Panel panel, List<string> columns) // заполнение ComboBox в конкретной панели
         {
             foreach (Control child in panel.Controls)
             {
@@ -452,20 +452,20 @@ namespace PractiStudent
                 }
             }
         }        
-        private bool IsColumnComboBox(ComboBox cmb) // Проверка, является ли ComboBox списком столбцов
+        private bool IsColumnComboBox(ComboBox cmb) // проверка, является ли ComboBox списком столбцов
         {
             return cmb.Name == "cmbSearchColumn" ||
                    cmb.Name == "cmbFilterColumn" ||
                    cmb.Name == "cmbSortColumn";
         }        
-        private void FillComboBoxWithColumns(ComboBox cmb, List<string> columns)// Заполнение ComboBox названиями столбцов
+        private void FillComboBoxWithColumns(ComboBox cmb, List<string> columns)// заполнение ComboBox названиями столбцов
         {
             cmb.Items.Clear();
             cmb.Items.AddRange(columns.ToArray());
             if (cmb.Items.Count > 0)
                 cmb.SelectedIndex = 0;
         }        
-        private void CmbFilterColumn_SelectedIndexChanged(object sender, EventArgs e) // Загрузка уникальных значений для фильтра
+        private void CmbFilterColumn_SelectedIndexChanged(object sender, EventArgs e) // загрузка уникальных значений для фильтра
         {
             ComboBox cmbColumn = sender as ComboBox;
             if (cmbColumn?.SelectedItem == null) 
@@ -482,7 +482,7 @@ namespace PractiStudent
                 Logger.LogError($"Ошибка загрузки значений для фильтра: {ex.Message}", ex, "CmbFilterColumn_SelectedIndexChanged");
             }
         }        
-        private void LoadDistinctValues(string columnName, ComboBox cmbValue) // Загрузка уникальных значений в ComboBox
+        private void LoadDistinctValues(string columnName, ComboBox cmbValue) // загрузка уникальных значений в ComboBox
         {
             List<string> values = _dbHelper.GetDistinctValues(_currentTableName, columnName);
 
@@ -499,7 +499,7 @@ namespace PractiStudent
 
             cmbValue.SelectedIndex = 0;
         }        
-        private Control FindControlInPanel(Panel panel, string name) // Поиск элемента управления в панели
+        private Control FindControlInPanel(Panel panel, string name) // поиск элемента управления в панели
         {
             foreach (Control ctrl in panel.Controls)
             {
@@ -507,7 +507,7 @@ namespace PractiStudent
             }
             return null;
         }        
-        private void BtnSearch_Click(object sender, EventArgs e) // Обработчики кнопок главного меню
+        private void BtnSearch_Click(object sender, EventArgs e) // обработчики кнопок главного меню
         {
             if (CheckTableSelected()) 
                 ShowPanel(FormModes.Search);
@@ -533,7 +533,7 @@ namespace PractiStudent
             }
             ShowPanel(FormModes.Add);
         }        
-        private void ShowUserAdditionForbiddenMessage() // Показ сообщения о запрете добавления пользователей
+        private void ShowUserAdditionForbiddenMessage() // показ сообщения о запрете добавления пользователей
         {
             ErrorHandler.ShowWarning(
                 "Добавление новых пользователей запрещено!\n\n" +
@@ -574,7 +574,7 @@ namespace PractiStudent
         {
             ShowPanel(FormModes.MainMenu);
         }        
-        private void BtnDoSearch_Click(object sender, EventArgs e) // Выполнение поиска
+        private void BtnDoSearch_Click(object sender, EventArgs e) // выполнение поиска
         {
             ComboBox cmbColumn = FindControlInPanel(panelSearch, "cmbSearchColumn") as ComboBox;
             TextBox txtValue = FindControlInPanel(panelSearch, "txtSearchValue") as TextBox;
@@ -596,7 +596,7 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "Search");
             }
         }        
-        private void BtnApplyFilter_Click(object sender, EventArgs e) // Применение фильтра
+        private void BtnApplyFilter_Click(object sender, EventArgs e) // применение фильтра
         {
             ComboBox cmbColumn = FindControlInPanel(panelFilter, "cmbFilterColumn") as ComboBox;
             ComboBox cmbValue = FindControlInPanel(panelFilter, "cmbFilterValue") as ComboBox;
@@ -624,15 +624,15 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "Filter");
             }
         }        
-        private void BtnSortAsc_Click(object sender, EventArgs e) // Сортировка по возрастанию
+        private void BtnSortAsc_Click(object sender, EventArgs e) // сортировка по возрастанию
         {
             PerformSort(true);
         }        
-        private void BtnSortDesc_Click(object sender, EventArgs e) // Сортировка по убыванию
+        private void BtnSortDesc_Click(object sender, EventArgs e) // сортировка по убыванию
         {
             PerformSort(false);
         }       
-        private void PerformSort(bool ascending) // Выполнение сортировки
+        private void PerformSort(bool ascending) // выполнение сортировки
         {
             ComboBox cmbColumn = FindControlInPanel(panelSort, "cmbSortColumn") as ComboBox;
             if (cmbColumn?.SelectedItem == null)
@@ -650,11 +650,11 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "Sort");
             }
         }        
-        private void BtnShowAll_Click(object sender, EventArgs e) // Показ всех записей
+        private void BtnShowAll_Click(object sender, EventArgs e) // показ всех записей
         {
             LoadTableData();
-        }        
-        private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd) // Создание динамической формы для добавления/редактирования
+        }
+        private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd)
         {
             panel.Controls.Clear();
             List<string> columns = _dbHelper.GetColumnNames(_currentTableName);
@@ -665,99 +665,116 @@ namespace PractiStudent
             panel.Controls.Add(PanelBuilder.CreateLabel(isAdd ? UIStyles.AddRecordTitle : UIStyles.EditRecordTitle, new Point(0, y), true));
             y += 25;
 
-            Dictionary<string, TextBox> textBoxes = new Dictionary<string, TextBox>();
-            Dictionary<string, ComboBox> comboBoxes = new Dictionary<string, ComboBox>();
+            var textBoxes = new Dictionary<string, TextBox>();
+            var comboBoxes = new Dictionary<string, ComboBox>();
 
             foreach (string col in columns)
             {
                 if (ShouldSkipColumn(col)) continue;
 
                 AddLabelToPanel(panel, col + ":", ref y, false);
-                CreateFieldControl(panel, col, row, isAdd, autoNumberColumns, fkMappings, textBoxes, comboBoxes, ref y);
-                y += 35;
+
+                var context = new FieldContext
+                {
+                    Panel = panel,
+                    ColumnName = col,
+                    Row = row,
+                    IsAddMode = isAdd,
+                    AutoNumberColumns = autoNumberColumns,
+                    ForeignKeyMappings = fkMappings,
+                    TextBoxes = textBoxes,
+                    ComboBoxes = comboBoxes,
+                    CurrentY = y
+                };
+                CreateFieldControl(context);
+                y = context.CurrentY + 35;
             }
             AddSubmitButton(panel, textBoxes, comboBoxes, isAdd, row, ref y);
             AddButtonToPanel(panel, "Вернуться назад", ref y, UIStyles.NeutralButton, BtnBackToMenu_Click);
-        }        
-        private bool ShouldSkipColumn(string col) // Проверка, нужно ли пропускать столбец
+        }
+        private bool ShouldSkipColumn(string col) // проверка, нужно ли пропускать столбец
         {
             return _currentTableName == TableConstants.TableUsers && col == TableConstants.FieldPasswordHash;
         }        
-        private void CreateFieldControl(Panel panel, string col, DataGridViewRow row, bool isAdd, // Создание элемента управления для поля
-            List<string> autoNumberColumns, Dictionary<string, string> fkMappings,
-            Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes, ref int y)
+        private void CreateFieldControl(FieldContext context) // создание элемента управления для поля
         {
-            if (_currentTableName == TableConstants.TableUsers && col == TableConstants.FieldRole)
+            if (_currentTableName == TableConstants.TableUsers && context.ColumnName == TableConstants.FieldRole)
             {
-                CreateReadOnlyRoleField(panel, col, row, isAdd, textBoxes, ref y);
+                CreateReadOnlyRoleField(context);
                 return;
             }
-            if (autoNumberColumns.Contains(col))
+
+            if (context.AutoNumberColumns.Contains(context.ColumnName))
             {
-                CreateAutoNumberField(panel, col, row, isAdd, textBoxes, ref y);
+                CreateAutoNumberField(context);
             }
-            else if (fkMappings.ContainsKey(col))
+            else if (context.ForeignKeyMappings.ContainsKey(context.ColumnName))
             {
-                CreateForeignKeyField(panel, col, row, isAdd, fkMappings, comboBoxes, ref y);
+                CreateForeignKeyField(context);
             }
             else
             {
-                CreateRegularField(panel, col, row, isAdd, textBoxes, ref y);
+                CreateRegularField(context);
             }
         }
-        private void CreateReadOnlyRoleField(Panel panel, string col, DataGridViewRow row, bool isAdd,
-    Dictionary<string, TextBox> textBoxes, ref int y)
+        private void CreateReadOnlyRoleField(FieldContext context)
         {
-            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
-            txt.Name = "txt_" + col;
-            txt.ReadOnly = true;
-            txt.BackColor = Color.FromArgb(240, 240, 240);  // Серый фон (неактивное)
-
-            if (!isAdd && row != null && row.Cells[col].Value != null)
-            {
-                txt.Text = row.Cells[col].Value.ToString();
-            }
-            else
-            {
-                txt.Text = TableConstants.RoleGuest;  // По умолчанию Гость
-            }
-
-            textBoxes[col] = txt;
-            panel.Controls.Add(txt);
-        }
-        private void CreateAutoNumberField(Panel panel, string col, DataGridViewRow row, bool isAdd,
-      Dictionary<string, TextBox> textBoxes, ref int y)
-        {
-            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
-            txt.Name = "txt_" + col;
+            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
+            txt.Name = "txt_" + context.ColumnName;
             txt.ReadOnly = true;
             txt.BackColor = Color.FromArgb(240, 240, 240);
-            if (!isAdd && row != null)
+
+            if (!context.IsAddMode && context.Row != null && context.Row.Cells[context.ColumnName].Value != null)
             {
-                object value = row.Cells[col].Value;
-                txt.Text = DataFormatter.FormatValueForDisplay(value);  
+                txt.Text = context.Row.Cells[context.ColumnName].Value.ToString();
+            }
+            else
+            {
+                txt.Text = TableConstants.RoleGuest;
+            }
+
+            context.TextBoxes[context.ColumnName] = txt;
+            context.Panel.Controls.Add(txt);
+        }
+        private void CreateAutoNumberField(FieldContext context)
+        {
+            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
+            txt.Name = "txt_" + context.ColumnName;
+            txt.ReadOnly = true;
+            txt.BackColor = Color.FromArgb(240, 240, 240);
+
+            if (!context.IsAddMode && context.Row != null)
+            {
+                object value = context.Row.Cells[context.ColumnName].Value;
+                txt.Text = DataFormatter.FormatValueForDisplay(value);
             }
             else
             {
                 txt.Text = UIStyles.AutoValueText;
             }
-            textBoxes[col] = txt;
-            panel.Controls.Add(txt);
+
+            context.TextBoxes[context.ColumnName] = txt;
+            context.Panel.Controls.Add(txt);
         }
-        private void CreateForeignKeyField(Panel panel, string col, DataGridViewRow row, bool isAdd, // Создание поля внешнего ключа
-            Dictionary<string, string> fkMappings, Dictionary<string, ComboBox> comboBoxes, ref int y)
+        private void CreateForeignKeyField(FieldContext context)
         {
-            ComboBox cmb = PanelBuilder.CreateComboBox(new Point(0, y));
-            cmb.Name = "cmb_" + col;
+            ComboBox cmb = PanelBuilder.CreateComboBox(new Point(0, context.CurrentY));
+            cmb.Name = "cmb_" + context.ColumnName;
+
             try
             {
-                FillForeignKeyComboBox(cmb, fkMappings[col], col, row, isAdd);
+                string relatedTable = context.ForeignKeyMappings[context.ColumnName];
+                FillForeignKeyComboBox(cmb, relatedTable, context.ColumnName, context.Row, context.IsAddMode);
             }
-            catch { }
-            comboBoxes[col] = cmb;
-            panel.Controls.Add(cmb);
-        }        
-        private void FillForeignKeyComboBox(ComboBox cmb, string relatedTable, string col, DataGridViewRow row, bool isAdd) // Заполнение ComboBox для внешнего ключа
+            catch (Exception ex)
+            {
+                Logger.LogError($"Ошибка создания поля FK {context.ColumnName}: {ex.Message}", ex, "CreateForeignKeyField");
+            }
+
+            context.ComboBoxes[context.ColumnName] = cmb;
+            context.Panel.Controls.Add(cmb);
+        }
+        private void FillForeignKeyComboBox(ComboBox cmb, string relatedTable, string col, DataGridViewRow row, bool isAdd) // заполнение ComboBox для внешнего ключа
         {
             var relatedData = _dbHelper.GetAllData(relatedTable);
 
@@ -776,7 +793,7 @@ namespace PractiStudent
                 SelectCurrentValue(cmb, col, row, isAdd);
             }
         }        
-        private void SelectCurrentValue(ComboBox cmb, string col, DataGridViewRow row, bool isAdd) // Выбор текущего значения в ComboBox
+        private void SelectCurrentValue(ComboBox cmb, string col, DataGridViewRow row, bool isAdd) // выбор текущего значения в ComboBox
         {
             if (!isAdd && row != null && row.Cells[col].Value != null)
             {
@@ -795,54 +812,62 @@ namespace PractiStudent
                 cmb.SelectedIndex = 0;
             }
         }
-        private void CreateRegularField(Panel panel, string col, DataGridViewRow row, bool isAdd,
-    Dictionary<string, TextBox> textBoxes, ref int y)
+        private void CreateRegularField(FieldContext context)
         {
-            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, y));
-            txt.Name = "txt_" + col;
+            TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
+            txt.Name = "txt_" + context.ColumnName;
 
-            if (!isAdd && row != null)
+            if (!context.IsAddMode && context.Row != null)
             {
-                object value = row.Cells[col].Value;
+                object value = context.Row.Cells[context.ColumnName].Value;
                 txt.Text = DataFormatter.FormatValueForDisplay(value);
             }
 
-            textBoxes[col] = txt;
-            panel.Controls.Add(txt);
+            context.TextBoxes[context.ColumnName] = txt;
+            context.Panel.Controls.Add(txt);
         }
-        private void AddSubmitButton(Panel panel, Dictionary<string, TextBox> textBoxes,
-            Dictionary<string, ComboBox> comboBoxes, bool isAdd, DataGridViewRow row, ref int y) // Добавление кнопки отправки формы
+        private void AddSubmitButton(Panel panel, Dictionary<string, TextBox> textBoxes, // добавление кнопки отправки формы
+      Dictionary<string, ComboBox> comboBoxes, bool isAdd, DataGridViewRow row, ref int y)
         {
             string buttonText = isAdd ? "Добавить" : "Сохранить";
+
+            var context = new SubmitContext
+            {
+                TextBoxes = textBoxes,
+                ComboBoxes = comboBoxes,
+                IsAddMode = isAdd,
+                Row = row
+            };
+
             AddButtonToPanel(panel, buttonText, ref y, UIStyles.SuccessButton,
-                (s, ev) => BtnSubmitDynamic_Click(s, ev, textBoxes, comboBoxes, isAdd, row));
+                (s, ev) => BtnSubmitDynamic_Click(s, ev, context));
         }
-        private void BtnSubmitDynamic_Click(object sender, EventArgs e, // Обработчик отправки динамической формы
-            Dictionary<string, TextBox> textBoxes, Dictionary<string, ComboBox> comboBoxes,
-            bool isAdd, DataGridViewRow row)
+        private void BtnSubmitDynamic_Click(object sender, EventArgs e, SubmitContext context) // обработчик динамической отправки 
         {
             try
             {
-                var values = CollectFieldValues(textBoxes, comboBoxes);
+                var values = CollectFieldValues(context.TextBoxes, context.ComboBoxes);
 
-                if (isAdd)
+                if (context.IsAddMode)
                 {
                     AddNewRecord(values);
                 }
                 else
                 {
-                    UpdateExistingRecord(values, row);
+                    UpdateExistingRecord(values, context.Row);
                 }
+
                 LoadTableData();
                 ShowPanel(FormModes.MainMenu);
                 ForceCleanupComResources();
             }
             catch (Exception ex)
             {
+                Logger.LogError($"Ошибка в SubmitDynamic: {ex.Message}", ex, "BtnSubmitDynamic_Click");
                 ErrorHandler.Handle(ex, "SubmitDynamic");
             }
-        }        
-        private Dictionary<string, object> CollectFieldValues(Dictionary<string, TextBox> textBoxes, // Сбор значений полей
+        }
+        private Dictionary<string, object> CollectFieldValues(Dictionary<string, TextBox> textBoxes, // сбор значений полей
             Dictionary<string, ComboBox> comboBoxes) 
         {
             var values = new Dictionary<string, object>();
@@ -860,7 +885,7 @@ namespace PractiStudent
 
             return values;
         }        
-        private object ExtractComboBoxValue(ComboBox cmb) // Извлечение значения из ComboBox
+        private object ExtractComboBoxValue(ComboBox cmb) // извлечение значения из ComboBox
         {
             if (cmb.SelectedIndex <= 0)
                 return DBNull.Value;
@@ -876,7 +901,7 @@ namespace PractiStudent
 
             return (object)selectedText;
         }        
-        private void AddNewRecord(Dictionary<string, object> values) // Добавление новой записи
+        private void AddNewRecord(Dictionary<string, object> values) // добавление новой записи
         {
             if (!CheckUniqueConstraints(values)) 
                 return;
@@ -892,7 +917,7 @@ namespace PractiStudent
             }
             ShowPanel(FormModes.MainMenu);
         }        
-        private bool CheckUniqueConstraints(Dictionary<string, object> values) // Проверка уникальных ограничений
+        private bool CheckUniqueConstraints(Dictionary<string, object> values) // проверка уникальных ограничений
         {
             var uniqueColumns = _dbHelper.GetUniqueColumns(_currentTableName);
 
@@ -911,14 +936,14 @@ namespace PractiStudent
             }
             return true;
         }        
-        private bool IsValueExists(string columnName, object value)// Проверка существования значения
+        private bool IsValueExists(string columnName, object value)// проверка существования значения
         {
             string checkQuery = $"SELECT COUNT(*) FROM [{_currentTableName}] WHERE [{columnName}] = ?";
             int count = Convert.ToInt32(_dbHelper.ExecuteScalar(checkQuery,
                 new System.Data.OleDb.OleDbParameter[] { new System.Data.OleDb.OleDbParameter("?", value) }));
             return count > 0;
         }        
-        private void UpdateExistingRecord(Dictionary<string, object> values, DataGridViewRow row) // Обновление существующей записи
+        private void UpdateExistingRecord(Dictionary<string, object> values, DataGridViewRow row) // обновление существующей записи
         {
             object keyValue = row.Cells[_primaryKeyColumn].Value;
             _tableOps.UpdateRecord(_currentTableName, values, _primaryKeyColumn, keyValue, _primaryKeyColumn);
@@ -949,7 +974,7 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "Delete");
             }
         }
-        private void DeleteUser() // Удаление пользователя
+        private void DeleteUser() // удаление пользователя
         {
             string loginToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldLogin].Value?.ToString();
             string roleToDelete = dataGridViewMain.CurrentRow.Cells[TableConstants.FieldRole].Value?.ToString();
@@ -961,7 +986,7 @@ namespace PractiStudent
                 PerformUserDeletion(loginToDelete);
             }
         }        
-        private bool CanDeleteUser(string loginToDelete, string roleToDelete) // Проверка возможности удаления пользователя
+        private bool CanDeleteUser(string loginToDelete, string roleToDelete) // проверка возможности удаления пользователя
         {
             if (loginToDelete == _userService.GetDatabaseFileName())
             {
@@ -978,7 +1003,7 @@ namespace PractiStudent
             }
             return true;
         }        
-        private void PerformUserDeletion(string loginToDelete) // Выполнение удаления пользователя
+        private void PerformUserDeletion(string loginToDelete) // выполнение удаления пользователя
         {
             try
             {
@@ -993,7 +1018,7 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "DeleteUser");
             }
         }        
-        private void DeleteRecordWithCascade() // Удаление записи с каскадом
+        private void DeleteRecordWithCascade() // удаление записи с каскадом
         {
             bool needsCascade = NeedsCascadeDelete(_currentTableName);
             string message = "Вы уверены, что хотите удалить выбранную запись?";
@@ -1008,7 +1033,7 @@ namespace PractiStudent
                 PerformRecordDeletion(needsCascade);
             }
         }       
-        private void PerformRecordDeletion(bool needsCascade)  // Выполнение удаления записи
+        private void PerformRecordDeletion(bool needsCascade)  // уыполнение удаления записи
         {
             try
             {
@@ -1032,14 +1057,14 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "Delete");
             }
         }        
-        private bool NeedsCascadeDelete(string tableName) // Проверка необходимости каскадного удаления
+        private bool NeedsCascadeDelete(string tableName) // проверка необходимости каскадного удаления
         {
             return tableName == TableConstants.TableFaculties ||
                    tableName == TableConstants.TableSpecialties ||
                    tableName == TableConstants.TableSpecializations ||
                    tableName == TableConstants.TableSchools;
         }       
-        private string GetCascadeWarning(string tableName) // Получение предупреждения о каскадном удалении
+        private string GetCascadeWarning(string tableName) // получение предупреждения о каскадном удалении
         {
             return tableName switch
             {
@@ -1050,7 +1075,7 @@ namespace PractiStudent
                 _ => null
             };
         }        
-        private void BtnCreateReport_Click(object sender, EventArgs e) // Создание отчёта
+        private void BtnCreateReport_Click(object sender, EventArgs e) // создание отчёта
         {
             ComboBox cmbFormat = FindControlInPanel(panelReport, "cmbReportFormat") as ComboBox;
             string format = cmbFormat?.SelectedItem?.ToString() ?? "Word (.doc)";
@@ -1067,7 +1092,7 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, "CreateReport");
             }
         }       
-        private string ShowSaveFileDialog(string format)  // Показ диалога сохранения файла
+        private string ShowSaveFileDialog(string format)  // показ диалога сохранения файла
         {
             using (SaveFileDialog saveDialog = new SaveFileDialog())
             {
@@ -1078,7 +1103,7 @@ namespace PractiStudent
                 return saveDialog.ShowDialog() == DialogResult.OK ? saveDialog.FileName : null;
             }
         }        
-        private void GenerateReport(string format, string filePath) // Генерация отчёта
+        private void GenerateReport(string format, string filePath) // генерация отчёта
         {
             if (format.Contains("Word"))
             {
@@ -1090,7 +1115,7 @@ namespace PractiStudent
             }
             ErrorHandler.ShowInfo("Отчёт успешно создан!");
         }        
-        private bool CheckTableSelected() // Проверка выбора таблицы
+        private bool CheckTableSelected() // проверка выбора таблицы
         {
             if (string.IsNullOrEmpty(_currentTableName))
             {
@@ -1099,7 +1124,7 @@ namespace PractiStudent
             }
             return true;
         }        
-        private void ForceCleanupComResources() // Принудительная очистка COM-ресурсов
+        private void ForceCleanupComResources() // принудительная очистка COM-ресурсов (должна по идее предотвращать внезапный вылет)
         {
             try
             {

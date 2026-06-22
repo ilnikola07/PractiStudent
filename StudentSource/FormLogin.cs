@@ -30,7 +30,7 @@ namespace PractiStudent
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.ClassStyle |= 0x200; // Убрать крестик для закрытия
+                cp.ClassStyle |= 0x200; 
                 return cp; 
             }
         }
@@ -337,7 +337,7 @@ namespace PractiStudent
             ErrorHandler.ShowWarning(
                 "Не удалось подключиться к базе данных.\n\n" +
                 "Убедитесь, что:\n" +
-                "1. Файл является базой данных Access (.accdb или .mdb)\n" +
+                "1. Файл является базой данных Access (.accdb)\n" +
                 "2. Файл содержит таблицу \"Пользователи\"\n" +
                 "3. Файл не поврежден и не защищен паролем");
         }        

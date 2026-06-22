@@ -9,9 +9,8 @@ namespace PractiStudent
         /// </summary>
         [STAThread]
         static void Main()
-        {
-            // Глобальный обработчик исключений
-            Application.ThreadException += (sender, e) =>
+        {            
+            Application.ThreadException += (sender, e) => // Глобальный обработчик исключений
             {
                 ErrorHandler.Handle(e.Exception, "Global UI Exception");
             };
@@ -27,7 +26,7 @@ namespace PractiStudent
             Application.SetCompatibleTextRenderingDefault(false);
 
             FormLogin loginForm = new FormLogin();
-            Application.Run(loginForm); // FormLogin теперь главная форма приложения
+            Application.Run(loginForm); // FormLogin главная форма приложения
 
             //Application.Run(new FormLogin()); // Первой запускается форма авторизации
         }

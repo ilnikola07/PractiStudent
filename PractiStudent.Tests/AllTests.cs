@@ -1,18 +1,15 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using Logic;
-using PractiStudent.Data;
 
 namespace PractiStudent.Tests
 {
     [TestClass]
     public class AllTests
-    {     
-
-        #region Тесты констант (не требуют БД)
+    {
+        #region Тесты констант
 
         [TestMethod]
         public void Constants_RoleAdmin_ShouldBeCorrect()
@@ -27,46 +24,34 @@ namespace PractiStudent.Tests
         }
 
         [TestMethod]
-        public void Constants_TableUsers_ShouldBeCorrect()
+        public void Constants_TableName_ShouldBeCorrect()
         {
             Assert.AreEqual("Пользователи", TableConstants.TableUsers);
         }
 
         [TestMethod]
-        public void Constants_TableApplicants_ShouldBeCorrect()
+        public void TableConstants_ShouldHaveCorrectValues()
         {
+            Assert.AreEqual("Пользователи", TableConstants.TableUsers);
             Assert.AreEqual("Абитуриент", TableConstants.TableApplicants);
         }
 
         #endregion
 
-        #region Простые тесты логики (не требуют БД)
-
-        [TestMethod]
-        public void String_IsNotNullOrEmpty_ShouldWork()
-        {
-            Assert.IsFalse(string.IsNullOrEmpty("admin"));
-            Assert.IsTrue(string.IsNullOrEmpty(""));
-        }
-
-        [TestMethod]
-        public void String_Trim_ShouldRemoveWhitespaces()
-        {
-            Assert.AreEqual("admin", "  admin  ".Trim());
-        }
-
-        [TestMethod]
-        public void Password_Length_Check()
-        {
-            string password = "123456";
-            Assert.IsTrue(password.Length >= 6);
-        }
+        #region Тесты валидации
 
         [TestMethod]
         public void Login_ShouldNotBeEmpty()
         {
             string login = "admin";
             Assert.IsFalse(string.IsNullOrWhiteSpace(login));
+        }
+
+        [TestMethod]
+        public void Password_Length_ShouldBeAtLeast5Characters()
+        {
+            string password = "12345";
+            Assert.IsTrue(password.Length >= 5);
         }
 
         [TestMethod]
@@ -79,30 +64,46 @@ namespace PractiStudent.Tests
 
         #endregion
 
-        #region Тесты коллекций (не требуют БД)
+        #region Тесты работы со строками
 
         [TestMethod]
-        public void List_ShouldAddItems()
+        public void String_IsNotNullOrEmpty_ShouldWorkCorrectly()
         {
-            var list = new List<string>();
-            list.Add("item1");
-            list.Add("item2");
-
-            Assert.AreEqual(2, list.Count);
+            Assert.IsFalse(string.IsNullOrEmpty("test"));
+            Assert.IsTrue(string.IsNullOrEmpty(""));
         }
 
         [TestMethod]
-        public void Dictionary_ShouldAddKeyValuePairs()
+        public void String_IsNotNullOrEmpty_ShouldHandleWhitespace()
         {
-            var dict = new Dictionary<string, string>();
-            dict.Add("key1", "value1");
+            Assert.IsFalse(string.IsNullOrEmpty("  "));
+            Assert.IsTrue(string.IsNullOrWhiteSpace("  "));
+        }
 
-            Assert.AreEqual("value1", dict["key1"]);
+        [TestMethod]
+        public void String_Trim_ShouldRemoveWhitespaces()
+        {
+            Assert.AreEqual("admin", "  admin  ".Trim());
+        }
+
+        [TestMethod]
+        public void String_Comparison_ShouldBeCaseSensitive()
+        {
+            string s1 = "Admin";
+            string s2 = "admin";
+            Assert.AreNotEqual(s1, s2);
         }
 
         #endregion
 
-        #region Тесты работы с файлами (не требуют БД)
+        #region Тесты работы с путями
+
+        [TestMethod]
+        public void Path_Combine_ShouldWorkCorrectly()
+        {
+            string path = Path.Combine("folder", "subfolder", "file.txt");
+            Assert.IsTrue(path.Contains("file.txt"));
+        }
 
         [TestMethod]
         public void File_Exists_ShouldCreateLogFile()
@@ -115,11 +116,21 @@ namespace PractiStudent.Tests
             File.Delete(logFile);
         }
 
+        #endregion
+
+        #region Тесты логирования
+
         [TestMethod]
-        public void Path_Combine_ShouldWorkCorrectly()
+        public void LogError_ShouldCreateLogFile()
         {
-            string path = Path.Combine("folder", "subfolder", "file.txt");
-            Assert.IsTrue(path.Contains("file.txt"));
+            string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error.log");
+            if (File.Exists(logFile)) File.Delete(logFile);
+
+            Exceptions.Logger.LogError("Test error", null, "TestContext");
+
+            Assert.IsTrue(File.Exists(logFile));
+            string content = File.ReadAllText(logFile);
+            Assert.IsTrue(content.Contains("Test error"));
         }
 
         #endregion

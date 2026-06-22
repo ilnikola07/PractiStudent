@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Logic
 {
-    public static class SecurityHelper // Класс для хеширования паролей
+    public static class SecurityHelper // класс для хеширования паролей
     {
         public static string ComputeSha256Hash(string rawData)
         {

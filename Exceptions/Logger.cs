@@ -36,7 +36,7 @@ namespace Exceptions
             {
                 File.AppendAllText(LogFilePath, logEntry + Environment.NewLine);
             }
-            catch { /* Игнорируем ошибки логирования */ }
+            catch {  }
         }
     }
 }

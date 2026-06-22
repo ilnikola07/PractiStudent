@@ -20,14 +20,14 @@ namespace PractiStudent
         public static readonly Font InputFont = new Font("Segoe UI", 11);
         public static readonly Font HintFont = new Font("Segoe UI", 8);
 
-        // Настройки размеров
+        // настройки размеров
         public static readonly Size ButtonSize = new Size(280, 45);
         public static readonly Size InputSize = new Size(280, 25);
         public static readonly Size LabelSize = new Size(280, 15);
         public static readonly Size FormSize = new Size(400, 450);
         public static readonly Size MainFormSize = new Size(1200, 700);
 
-        // Настройки форм
+        // настройки форм
         public static readonly FormStartPosition DefaultFormStartPosition = FormStartPosition.CenterScreen;
         public static readonly FormBorderStyle DefaultBorderStyle = FormBorderStyle.FixedSingle;
         public static readonly bool AllowMaximize = false;
@@ -51,7 +51,7 @@ namespace PractiStudent
         public static readonly string AllValuesText = "(Все значения)";
         public static readonly string FilterHint = "Можно вводить часть значения для поиска";
 
-        // Экран подключения
+        // экран подключения
         public static readonly Point InitialTitlePosition = new Point(20, 80);
         public static readonly Size InitialTitleSize = new Size(345, 100);
         public static readonly Point ButtonConnectPosition = new Point(50, 210);
@@ -59,7 +59,7 @@ namespace PractiStudent
         public static readonly Point ConnectionStatusPosition = new Point(10, 8);
         public static readonly Size ConnectionStatusSize = new Size(380, 30);
 
-        // Главное меню
+        // главное меню
         public static readonly Point MenuTitlePosition = new Point(20, 30);
         public static readonly Size MenuTitleSize = new Size(345, 60);
         public static readonly Point ButtonRegisterPosition = new Point(50, 120);
@@ -67,7 +67,7 @@ namespace PractiStudent
         public static readonly Point ButtonLoginAdminPosition = new Point(50, 240);
         public static readonly Point ButtonExitPosition = new Point(50, 320);
 
-        // Панель ввода
+        // панель ввода
         public static readonly Point InputPanelPosition = new Point(20, 20);
         public static readonly Size InputPanelSize = new Size(345, 370);
         public static readonly Point FormActionTitlePosition = new Point(0, 10);
@@ -81,14 +81,14 @@ namespace PractiStudent
         public static readonly Point ButtonSubmitPosition = new Point(30, 250);
         public static readonly Point ButtonBackPosition = new Point(30, 310);
 
-        // Левая панель
+        // левая панель
         public static readonly Point TableSelectLabelPosition = new Point(15, 35);
         public static readonly Point TableSelectComboPosition = new Point(15, 58);
         public static readonly Size TableSelectComboSize = new Size(280, 30);
         public static readonly Point ConnectionInfoPosition = new Point(10, 5);
         public static readonly Size ConnectionInfoSize = new Size(380, 20);
 
-        // Панели действий
+        // панели действий
         public static readonly int ActionPanelTop = 100;
         public static readonly int ActionPanelHeight = 500;
         public static readonly Size ActionPanelSize = new Size(370, 500);

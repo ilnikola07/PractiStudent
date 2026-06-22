@@ -4,7 +4,7 @@ using Exceptions;
 
 namespace Logic
 {
-    public class UserService // Класс отвечающий за регистрацию пользователей и вход
+    public class UserService // класс отвечающий за регистрацию пользователей и вход
     {
         private readonly DatabaseHelper _dbHelper;
         private bool _isConnected = false;
@@ -14,7 +14,7 @@ namespace Logic
             _dbHelper = new DatabaseHelper();
         }
                 
-        public bool ConnectToDatabase(string filePath) // Метод для подключения к выбранной бд
+        public bool ConnectToDatabase(string filePath) // метод для подключения к выбранной бд
         {
             _isConnected = _dbHelper.SetDatabaseConnection(filePath);
 
@@ -29,7 +29,7 @@ namespace Logic
         public bool CanDeleteUser(string loginToDelete, string currentLoggedInUser)
         {             
             string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ? AND [Логин] != ?";
-            OleDbParameter[] parameters = new OleDbParameter[] // Нельзя удалить последнего админа
+            OleDbParameter[] parameters = new OleDbParameter[] // нельзя удалить последнего админа
             {
         new OleDbParameter("?", "Администратор"),
         new OleDbParameter("?", loginToDelete)
@@ -38,12 +38,12 @@ namespace Logic
             try
             {
                 int adminCount = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
-                return adminCount > 0; // Можно удалять только если есть другие админы
+                return adminCount > 0; // можно удалять только если есть другие админы
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Ошибка проверки админов: {ex.Message}");
-                return false; // В случае ошибки запрещаем удаление
+                return false; // в случае ошибки запрещаем удаление
             }
         }
         public string GetDatabaseFileName()

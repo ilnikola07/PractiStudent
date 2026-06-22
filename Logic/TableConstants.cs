@@ -2,7 +2,7 @@
 {
     public static class TableConstants
     {
-        // Имена таблиц
+        // имена таблиц
         public const string TableApplicants = "Абитуриент";
         public const string TableUsers = "Пользователи";
         public const string TableSpecializations = "Специализация";
@@ -10,7 +10,7 @@
         public const string TableFaculties = "Факультет";
         public const string TableSchools = "Что_окончил";
 
-        // Поля
+        // поля
         public const string FieldRegNumber = "Регистрационный_номер";
         public const string FieldFullName = "ФИО";
         public const string FieldBirthDate = "Дата_рождения";
@@ -22,7 +22,7 @@
         public const string FieldPasswordHash = "Хэш_пароля";
         public const string FieldRole = "Роль";
 
-        // Роли
+        // роли
         public const string RoleAdmin = "Администратор";
         public const string RoleGuest = "Гость";
     }

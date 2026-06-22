@@ -2,7 +2,7 @@
 {
     public static class FormModes
     {
-        // Для FormMain (панели действий)
+        // для FormMain (панели действий)
         public const string MainMenu = "MainMenu";
         public const string Search = "Search";
         public const string Filter = "Filter";
