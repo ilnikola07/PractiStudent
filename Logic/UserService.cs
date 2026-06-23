@@ -1,126 +1,91 @@
-﻿using System.Data.OleDb;
+﻿using System;
 using PractiStudent.Data;
-using Exceptions;  
 
 namespace Logic
 {
-    public class UserService // класс отвечающий за регистрацию пользователей и вход
+    public class UserService // класс, отвечающий за работу с пользователями
     {
-        private readonly DatabaseHelper _dbHelper;
-        private bool _isConnected = false;
+        private DatabaseHelper _dbHelper;
+        private string _databaseFileName;
 
-        public UserService()
+        public UserService() 
         {
             _dbHelper = new DatabaseHelper();
         }
-                
-        public bool ConnectToDatabase(string filePath) // метод для подключения к выбранной бд
+
+        /// <summary>
+        /// подключение к базе данных
+        /// </summary>
+        public bool ConnectToDatabase(string filePath)
         {
-            _isConnected = _dbHelper.SetDatabaseConnection(filePath);
-
-            if (_isConnected)
+            bool result = _dbHelper.SetDatabaseConnection(filePath);
+            if (result)
             {
-                EnsureAdminCreated();
+                _databaseFileName = System.IO.Path.GetFileName(filePath);
             }
-
-            return _isConnected;
+            return result;
         }
 
-        public bool CanDeleteUser(string loginToDelete, string currentLoggedInUser)
-        {             
-            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ? AND [Логин] != ?";
-            OleDbParameter[] parameters = new OleDbParameter[] // нельзя удалить последнего админа
-            {
-        new OleDbParameter("?", "Администратор"),
-        new OleDbParameter("?", loginToDelete)
-            };
-
-            try
-            {
-                int adminCount = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
-                return adminCount > 0; // можно удалять только если есть другие админы
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ошибка проверки админов: {ex.Message}");
-                return false; // в случае ошибки запрещаем удаление
-            }
-        }
+        /// <summary>
+        /// получение имени файла базы данных
+        /// </summary>
         public string GetDatabaseFileName()
         {
-            return _dbHelper.DatabaseFileName;
+            return _databaseFileName;
         }
-        public void EnsureAdminCreated()
+
+        /// <summary>
+        /// валидация учётных данных пользователя
+        /// </summary>
+        public string ValidateUser(string login, string password, string expectedRole)
         {
-            try
-            {
-                string adminLogin = "admin";
-                if (!IsLoginExists(adminLogin))
-                {
-                    string passwordHash = SecurityHelper.ComputeSha256Hash("admin123");
-                    string query = "INSERT INTO Пользователи (Логин, Хэш_Пароля, Роль) VALUES (?, ?, ?)";
+            string hashedPassword = SecurityHelper.ComputeSha256Hash(password);
+            string role = _dbHelper.GetUserRole(login, hashedPassword);
 
-                    OleDbParameter[] parameters = new OleDbParameter[]
-                    {
-                        new OleDbParameter("?", adminLogin),
-                        new OleDbParameter("?", passwordHash),
-                        new OleDbParameter("?", "Администратор")
-                    };
-
-                    _dbHelper.ExecuteNonQuery(query, parameters);
-                }
-            }
-            catch (Exception ex)
+            if (role != null && role == expectedRole)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка создания админа: {ex.Message}");
+                return expectedRole;
             }
+
+            return null;
         }
+
+        /// <summary>
+        /// регистрация нового гостя
+        /// </summary>
         public bool RegisterGuest(string login, string password)
         {
-            if (IsLoginExists(login))
+            if (_dbHelper.IsLoginExists(login))
             {
                 throw new Exception("Пользователь с таким логином уже существует!");
             }
 
             string passwordHash = SecurityHelper.ComputeSha256Hash(password);
-            string query = "INSERT INTO Пользователи (Логин, Хэш_Пароля, Роль) VALUES (@login, @hash, @role)";
-
-            OleDbParameter[] parameters = new OleDbParameter[]
-            {
-                new OleDbParameter("@login", login),
-                new OleDbParameter("@hash", passwordHash),
-                new OleDbParameter("@role", "Гость")
-            };
-
-            int rows = _dbHelper.ExecuteNonQuery(query, parameters);
-            return rows > 0;
+            return _dbHelper.InsertUser(login, passwordHash, "Гость");
         }
 
-        public string ValidateUser(string login, string password, string expectedRole)
+        /// <summary>
+        /// проверка возможности удаления пользователя
+        /// </summary>
+        public bool CanDeleteUser(string loginToDelete, string currentUserRole)
         {
-            string passwordHash = SecurityHelper.ComputeSha256Hash(password);
-            string query = "SELECT Роль FROM Пользователи WHERE Логин = ? AND Хэш_Пароля = ? AND Роль = ?";
-
-            OleDbParameter[] parameters = new OleDbParameter[]
+            if (currentUserRole == "Администратор")
             {
-                new OleDbParameter("?", login),
-                new OleDbParameter("?", passwordHash),
-                new OleDbParameter("?", expectedRole)
-            };
-            object result = _dbHelper.ExecuteScalar(query, parameters);
-            return result?.ToString();
+                int adminCount = _dbHelper.GetAdminCount();
+                if (adminCount <= 1)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
-        private bool IsLoginExists(string login)
+        /// <summary>
+        /// удаление пользователя
+        /// </summary>
+        public bool DeleteUser(string login)
         {
-            string query = "SELECT COUNT(*) FROM Пользователи WHERE Логин = ?";
-            OleDbParameter[] parameters = new OleDbParameter[]
-            {
-                new OleDbParameter("?", login)
-            };
-
-            int count = Convert.ToInt32(_dbHelper.ExecuteScalar(query, parameters));
-            return count > 0;
+            return _dbHelper.DeleteUser(login);
         }
     }
 }

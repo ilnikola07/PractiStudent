@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace PractiStudent
 {
-    public class FieldContext // контекст для создания полей формы, инкапсулирует параметры методов
+    public class FieldContext // контекст для создания полей формы, инкапсулирует множество параметров методов в один объект
     {
         public Panel Panel { get; set; }
         public string ColumnName { get; set; }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Logic
 {
-    public static class ReportGenerator
+    public static class ReportGenerator // класс формирования отчётов
     {
         private const int LineWidth = 80;
         private const int ColumnWidth = 20;
@@ -18,7 +18,8 @@ namespace Logic
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
 
-            StringBuilder sb = new StringBuilder();
+            // по факту это HTML-документ с расширением .doc, который Word открывает как обычный документ
+            StringBuilder sb = new StringBuilder(); // использует буфер, что эффективнее если много данных
             sb.AppendLine("<html><head><meta charset='utf-8'></head><body>");
             sb.AppendLine($"<h1>Отчёт по таблице: {tableName}</h1>");
             sb.AppendLine($"<p>Дата формирования: {DateTime.Now:dd.MM.yyyy HH:mm}</p>");
@@ -55,7 +56,7 @@ namespace Logic
             if (data == null) throw new ArgumentNullException(nameof(data));
             if (string.IsNullOrEmpty(filePath)) throw new ArgumentNullException(nameof(filePath));
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(); // формирование заголовка
             sb.AppendLine($"ОТЧЁТ ПО ТАБЛИЦЕ: {tableName}");
             sb.AppendLine($"Дата формирования: {DateTime.Now:dd.MM.yyyy HH:mm}");
             sb.AppendLine($"Пользователь: {userRole}");
@@ -69,7 +70,7 @@ namespace Logic
             sb.AppendLine(header);
             sb.AppendLine(new string('-', LineWidth));
 
-            foreach (DataRow row in data.Rows)
+            foreach (DataRow row in data.Rows) // аналогичным образом заполняем данными
             {
                 string line = "";
                 foreach (DataColumn col in data.Columns)

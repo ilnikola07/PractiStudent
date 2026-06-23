@@ -1,8 +1,7 @@
 ﻿namespace PractiStudent
 {
-    public static class FormModes
-    {
-        // для FormMain (панели действий)
+    public static class FormModes   // константы режимов FormMain (панели действий)
+    {      
         public const string MainMenu = "MainMenu";
         public const string Search = "Search";
         public const string Filter = "Filter";

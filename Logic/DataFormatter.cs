@@ -3,8 +3,12 @@ using System.Data;
 
 namespace PractiStudent.Data
 {
-    public static class DataFormatter // класс форматирования даты
+    public static class DataFormatter // класс форматирования даты в некоторых данных
     {
+        /// <summary>
+        ///  форматирует дату в таблице
+        /// </summary>
+        /// <param name="table"></param>
         public static void FormatDatesInTable(DataTable table)
         {
             if (table == null) return;
@@ -24,6 +28,12 @@ namespace PractiStudent.Data
                 }
             }
         }
+
+        /// <summary>
+        /// форматирует одно значение для отображения в интерфейсе
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string FormatValueForDisplay(object value)
         {
             if (value == null || value == DBNull.Value)
@@ -36,11 +46,21 @@ namespace PractiStudent.Data
 
             return value.ToString();
         }
+        /// <summary>
+        /// является ли поле колонкой с датой
+        /// </summary>
+        /// <param name="col"></param>
+        /// <returns></returns>
         private static bool IsDateColumn(DataColumn col)
         {
             return col.DataType == typeof(DateTime) ||
                    col.ColumnName.Contains("Дата", StringComparison.OrdinalIgnoreCase);
         }
+        /// <summary>
+        /// если вдруг есть время - вывести 
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <returns></returns>
         private static string FormatDate(DateTime dt)
         {
             if (dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0)

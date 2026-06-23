@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace PractiStudent
 {
-    public static class UIStyles
+    public static class UIStyles // класс, хранящий централизованно стили (косметика форм)
     {
         public static readonly Color PrimaryButton = Color.FromArgb(230, 235, 240);
         public static readonly Color SuccessButton = Color.FromArgb(220, 240, 220);

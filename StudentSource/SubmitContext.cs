@@ -3,7 +3,7 @@ using System.Data;
 
 namespace PractiStudent
 {
-    public class SubmitContext
+    public class SubmitContext  // инкапсуляция параметров обработчика отправки формы
     {
         public Dictionary<string, TextBox> TextBoxes { get; set; }
         public Dictionary<string, ComboBox> ComboBoxes { get; set; }

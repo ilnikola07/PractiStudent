@@ -5,7 +5,7 @@ using System.Data;
 
 namespace Logic
 {
-    public class TableOperations
+    public class TableOperations // класс операций над таблицами
     {
         private readonly DatabaseHelper _dbHelper;
 
@@ -13,18 +13,45 @@ namespace Logic
         {
             _dbHelper = dbHelper;
         }
+        /// <summary>
+        /// поиск
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="searchText"></param>
+        /// <returns></returns>
         public DataTable Search(string tableName, string columnName, string searchText)
         {
             return _dbHelper.SearchData(tableName, columnName, searchText);
         }
+        /// <summary>
+        /// фильтрация
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="filterValue"></param>
+        /// <returns></returns>
         public DataTable Filter(string tableName, string columnName, string filterValue)
         {
             return _dbHelper.FilterData(tableName, columnName, filterValue);
         }
+        /// <summary>
+        /// сортировка
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="ascending"></param>
+        /// <returns></returns>
         public DataTable Sort(string tableName, string columnName, bool ascending)
         {
             return _dbHelper.SortData(tableName, columnName, ascending);
         }
+        /// <summary>
+        /// добавление записи
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="values"></param>
+        /// <param name="autoNumberColumns"></param>
         public void AddRecord(string tableName, Dictionary<string, object> values, List<string> autoNumberColumns)
         {
             var filteredValues = new Dictionary<string, object>();
@@ -37,22 +64,48 @@ namespace Logic
             }
             _dbHelper.InsertRecord(tableName, filteredValues);
         }
+        /// <summary>
+        /// обновление записи
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="values"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
+        /// <param name="primaryKeyColumn"></param>
         public void UpdateRecord(string tableName, Dictionary<string, object> values,
             string keyColumn, object keyValue, string primaryKeyColumn)
         {
             values.Remove(primaryKeyColumn);
             _dbHelper.UpdateRecord(tableName, values, keyColumn, keyValue);
         }
+        /// <summary>
+        /// удаление записи
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
         public void DeleteRecord(string tableName, string keyColumn, object keyValue)
         {
             _dbHelper.DeleteRecord(tableName, keyColumn, keyValue);
         }
+        /// <summary>
+        /// удаление каскадом
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
         public void DeleteWithCascade(string tableName, string keyColumn, object keyValue)
         {
             var relatedTables = GetRelatedTablesForCascade(tableName);
             _dbHelper.DeleteWithCascade(tableName, keyColumn, keyValue, relatedTables);
         }
-        public List<string> GetAutoNumberColumns(string tableName)
+
+        /// <summary>
+        /// получение полей счётчиков
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public List<string> GetAutoNumberColumns(string tableName) 
         {
             switch (tableName)
             {
@@ -72,6 +125,12 @@ namespace Logic
                     return new List<string>();
             }
         }
+
+        /// <summary>
+        /// получение внешних ключей
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         public Dictionary<string, string> GetForeignKeyMappings(string tableName)
         {
             if (tableName == TableConstants.TableApplicants)
@@ -99,6 +158,12 @@ namespace Logic
 
             return new Dictionary<string, string>();
         }
+
+        /// <summary>
+        /// метод удаления каскадом
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         private Dictionary<string, string> GetRelatedTablesForCascade(string tableName)
         {
             return tableName switch

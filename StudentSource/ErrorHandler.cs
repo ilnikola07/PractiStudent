@@ -4,7 +4,7 @@ using Exceptions;
 
 namespace StudentSource
 {
-    public static class ErrorHandler // классс обработчик всех сообщений и ошибок в приложении
+    public static class ErrorHandler // классс обработчик сообщений и ошибок в приложении (вывод в MessageBox)
     {
         public static void Handle(Exception ex, string context = "") // обработка исключений, используется в блоках catch
         {

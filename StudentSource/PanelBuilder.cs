@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace PractiStudent
 {
-    public static class PanelBuilder
+    public static class PanelBuilder // класс создания элементов на форме
     {
         public static Panel CreateActionPanel(int top, int height)
         {
@@ -15,17 +15,19 @@ namespace PractiStudent
                 Visible = false
             };
         }
-        public static Button CreateButton(string text, Point location, Color backColor, EventHandler click)
+        public static Button CreateButton(string text, Point location, Color backColor, EventHandler clickEvent)
         {
             Button btn = new Button
             {
                 Text = text,
                 Font = UIStyles.ButtonFont,
                 Location = location,
-                Size = UIStyles.ActionButtonSize,
-                BackColor = backColor
+                Size = UIStyles.ButtonSize,
+                BackColor = backColor,
+                FlatStyle = FlatStyle.Flat
             };
-            btn.Click += click;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Click += clickEvent;
             return btn;
         }
         public static Label CreateLabel(string text, Point location, bool bold = false)

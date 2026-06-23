@@ -8,7 +8,7 @@ using Exceptions;
 
 namespace PractiStudent.Data
 {
-    public class DatabaseHelper
+    public class DatabaseHelper  // класс для работы со слоем данных
     {
         private string _connectionString;
         public string DatabaseFileName { get; private set; }
@@ -17,6 +17,12 @@ namespace PractiStudent.Data
             _connectionString = null;
             DatabaseFileName = null;
         }
+
+        /// <summary>
+        /// устанавливает подключение к БД
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
         public bool SetDatabaseConnection(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
@@ -48,6 +54,12 @@ namespace PractiStudent.Data
                 return false;
             }
         }
+        /// <summary>
+        /// существует ли таблица в БД
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         private bool CheckTableExists(OleDbConnection conn, string tableName)
         {
             var schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
@@ -63,13 +75,22 @@ namespace PractiStudent.Data
             }
             return false;
         }
+        /// <summary>
+        /// есть ли подключение
+        /// </summary>
+        /// <exception cref="DatabaseException"></exception>
         private void EnsureConnection()
         {
             if (string.IsNullOrEmpty(_connectionString))
                 throw new DatabaseException("Подключение к БД не установлено");
         }
-        public string GetConnectionString() => _connectionString;
 
+        //public string GetConnectionString() => _connectionString;
+
+        /// <summary>
+        /// получает список всех таблиц
+        /// </summary>
+        /// <returns></returns>
         public List<string> GetTableNames()
         {
             EnsureConnection();
@@ -93,6 +114,12 @@ namespace PractiStudent.Data
             }
             return tables;
         }
+
+        /// <summary>
+        /// получает список всех полей в таблице
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         public List<string> GetColumnNames(string tableName)
         {
             EnsureConnection();
@@ -112,11 +139,25 @@ namespace PractiStudent.Data
             }
             return columns;
         }
+
+        /// <summary>
+        /// получает все данные в таблице
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         public DataTable GetAllData(string tableName)
         {
             EnsureConnection();
             return ExecuteSelect($"SELECT * FROM [{tableName}]");
         }
+
+        /// <summary>
+        /// поиск записи по частичному совпадению
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="searchText"></param>
+        /// <returns></returns>
         public DataTable SearchData(string tableName, string columnName, string searchText)
         {
             EnsureConnection();
@@ -124,6 +165,14 @@ namespace PractiStudent.Data
             OleDbParameter[] parameters = { new OleDbParameter("?", $"%{searchText}%") };
             return ExecuteSelect(query, parameters);
         }
+
+        /// <summary>
+        /// фильтрация данных (поиск по точному совпадению)
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="filterValue"></param>
+        /// <returns></returns>
         public DataTable FilterData(string tableName, string columnName, string filterValue)
         {
             EnsureConnection();
@@ -131,6 +180,14 @@ namespace PractiStudent.Data
             OleDbParameter[] parameters = { new OleDbParameter("?", filterValue) };
             return ExecuteSelect(query, parameters);
         }
+
+        /// <summary>
+        /// сортировка данных
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <param name="ascending"></param>
+        /// <returns></returns>
         public DataTable SortData(string tableName, string columnName, bool ascending)
         {
             EnsureConnection();
@@ -138,6 +195,13 @@ namespace PractiStudent.Data
             string query = $"SELECT * FROM [{tableName}] ORDER BY [{columnName}] {order}";
             return ExecuteSelect(query);
         }
+
+        /// <summary>
+        /// добавить новую запись
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
         public int InsertRecord(string tableName, Dictionary<string, object> values)
         {
             EnsureConnection();
@@ -151,6 +215,15 @@ namespace PractiStudent.Data
 
             return ExecuteNonQuery(query, parameters);
         }
+
+        /// <summary>
+        /// обновить запись в указанной таблице
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="values"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
+        /// <returns></returns>
         public int UpdateRecord(string tableName, Dictionary<string, object> values,
             string keyColumn, object keyValue)
         {
@@ -165,6 +238,14 @@ namespace PractiStudent.Data
 
             return ExecuteNonQuery(query, parameters.ToArray());
         }
+
+        /// <summary>
+        /// удалить запись по значению первичного ключа
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
+        /// <returns></returns>
         public int DeleteRecord(string tableName, string keyColumn, object keyValue)
         {
             EnsureConnection();
@@ -172,6 +253,13 @@ namespace PractiStudent.Data
             OleDbParameter[] parameters = { new OleDbParameter("?", keyValue) };
             return ExecuteNonQuery(query, parameters);
         }
+
+        /// <summary>
+        /// получает список уникальных значений в колонке таблицы
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
         public List<string> GetDistinctValues(string tableName, string columnName)
         {
             EnsureConnection();
@@ -190,6 +278,12 @@ namespace PractiStudent.Data
             }
             return values;
         }
+
+        /// <summary>
+        /// получает список уникальных колонок
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
         public List<string> GetUniqueColumns(string tableName)
         {
             EnsureConnection();
@@ -216,6 +310,13 @@ namespace PractiStudent.Data
             }
             return uniqueColumns;
         }
+
+        /// <summary>
+        /// выполняет SQL запрос, не возвращающий данных 
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
         public int ExecuteNonQuery(string query, OleDbParameter[] parameters = null)
         {
             using (OleDbConnection conn = new OleDbConnection(_connectionString))
@@ -227,6 +328,13 @@ namespace PractiStudent.Data
                 return cmd.ExecuteNonQuery();
             }
         }
+
+        /// <summary>
+        /// выполняет SQL запрос и возвращает одно значение (первый столбец первой строки)
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
         public object ExecuteScalar(string query, OleDbParameter[] parameters = null)
         {
             using (OleDbConnection conn = new OleDbConnection(_connectionString))
@@ -238,6 +346,13 @@ namespace PractiStudent.Data
                 return cmd.ExecuteScalar();
             }
         }
+
+        /// <summary>
+        ///  выполняет SQL запрос SELECT и возвращает результат в виде DataTable
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
         public DataTable ExecuteSelect(string query, OleDbParameter[] parameters = null)
         {
             using (OleDbConnection conn = new OleDbConnection(_connectionString))
@@ -253,6 +368,80 @@ namespace PractiStudent.Data
                 }
             }
         }
+        /// <summary>
+        /// Проверка существования логина в базе данных
+        /// </summary>
+        public bool IsLoginExists(string login)
+        {
+            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Логин] = ?";
+            OleDbParameter[] parameters = { new OleDbParameter("?", login) };
+
+            object result = ExecuteScalar(query, parameters);
+            return result != null && Convert.ToInt32(result) > 0;
+        }
+
+        /// <summary>
+        /// Получение роли пользователя по логину и хэшу пароля
+        /// </summary>
+        public string GetUserRole(string login, string passwordHash)
+        {
+            string query = "SELECT [Роль] FROM [Пользователи] WHERE [Логин] = ? AND [Хэш_пароля] = ?";
+            OleDbParameter[] parameters = {
+        new OleDbParameter("?", login),
+        new OleDbParameter("?", passwordHash)
+    };
+
+            object result = ExecuteScalar(query, parameters);
+            return result?.ToString();
+        }
+
+        /// <summary>
+        /// Регистрация нового пользователя
+        /// </summary>
+        public bool InsertUser(string login, string passwordHash, string role)
+        {
+            string query = "INSERT INTO [Пользователи] ([Логин], [Хэш_пароля], [Роль]) VALUES (?, ?, ?)";
+            OleDbParameter[] parameters = {
+        new OleDbParameter("?", login),
+        new OleDbParameter("?", passwordHash),
+        new OleDbParameter("?", role)
+    };
+
+            int rowsAffected = ExecuteNonQuery(query, parameters);
+            return rowsAffected > 0;
+        }
+
+        /// <summary>
+        /// Получение количества администраторов в системе
+        /// </summary>
+        public int GetAdminCount()
+        {
+            string query = "SELECT COUNT(*) FROM [Пользователи] WHERE [Роль] = ?";
+            OleDbParameter[] parameters = { new OleDbParameter("?", "Администратор") };
+
+            object result = ExecuteScalar(query, parameters);
+            return result != null ? Convert.ToInt32(result) : 0;
+        }
+
+        /// <summary>
+        /// удаление пользователя по логину
+        /// </summary>
+        public bool DeleteUser(string login)
+        {
+            string query = "DELETE FROM [Пользователи] WHERE [Логин] = ?";
+            OleDbParameter[] parameters = { new OleDbParameter("?", login) };
+
+            int rowsAffected = ExecuteNonQuery(query, parameters);
+            return rowsAffected > 0;
+        }
+
+        /// <summary>
+        /// удаление каскадом
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="keyColumn"></param>
+        /// <param name="keyValue"></param>
+        /// <param name="relatedTables"></param>
         public void DeleteWithCascade(string tableName, string keyColumn, object keyValue,
             Dictionary<string, string> relatedTables)
         {

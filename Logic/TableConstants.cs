@@ -1,8 +1,7 @@
 ﻿namespace Logic  
 {
-    public static class TableConstants
+    public static class TableConstants //класс констант, отвечает за хранение имён таблиц/полей
     {
-        // имена таблиц
         public const string TableApplicants = "Абитуриент";
         public const string TableUsers = "Пользователи";
         public const string TableSpecializations = "Специализация";
@@ -10,7 +9,6 @@
         public const string TableFaculties = "Факультет";
         public const string TableSchools = "Что_окончил";
 
-        // поля
         public const string FieldRegNumber = "Регистрационный_номер";
         public const string FieldFullName = "ФИО";
         public const string FieldBirthDate = "Дата_рождения";
@@ -22,7 +20,6 @@
         public const string FieldPasswordHash = "Хэш_пароля";
         public const string FieldRole = "Роль";
 
-        // роли
         public const string RoleAdmin = "Администратор";
         public const string RoleGuest = "Гость";
     }

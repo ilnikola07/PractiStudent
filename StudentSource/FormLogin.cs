@@ -5,20 +5,20 @@ namespace PractiStudent
 {
     public partial class FormLogin : Form
     {        
-        private const string ModeRegister = "Register"; // Константы режимов работы формы
+        private const string ModeRegister = "Register"; // константы режимов работы формы
         private const string ModeLoginGuest = "LoginGuest";
         private const string ModeLoginAdmin = "LoginAdmin";
 
         private readonly UserService _userService;
         private bool _isDatabaseConnected = false;
         
-        private Button btnConnectDatabase, btnExitInitial; // Элементы экрана подключения к БД
+        private Button btnConnectDatabase, btnExitInitial; // элементы экрана подключения к БД
         private Label lblInitialTitle, lblConnectionStatus;
                 
         private Button btnRegisterGuest, btnLoginGuest, btnLoginAdmin, btnExit;
-        private Label lblTitle; // Элементы главного меню авторизации
+        private Label lblTitle; // элементы главного меню авторизации
                 
-        private Panel panelInputContainer; // Элементы панели ввода учётных данных
+        private Panel panelInputContainer; // элементы панели ввода учётных данных
         private TextBox txtLogin, txtPassword, txtConfirmPassword;
         private Button btnSubmitAction, btnBackToMenu;
         private Label lblFormActionTitle;
@@ -42,7 +42,7 @@ namespace PractiStudent
             InitializeAllComponents();
             ShowConnectionScreen();
         }
-        private void ConfigureForm() // Настройка внешнего вида формы
+        private void ConfigureForm() // настройка внешнего вида формы
         {
             this.Text = UIStyles.LoginFormTitle;
             this.Size = UIStyles.FormSize;
@@ -73,7 +73,7 @@ namespace PractiStudent
             btn.Click += clickEvent;
             return btn;
         }        
-        private void InitializeConnectionScreen() // Инициализация экрана подключения к бд
+        private void InitializeConnectionScreen() // инициализация экрана подключения к бд
         {
             lblInitialTitle = CreateInitialTitle();
             btnConnectDatabase = CreateConnectButton();
@@ -81,7 +81,7 @@ namespace PractiStudent
             lblConnectionStatus = CreateConnectionStatusLabel();
             this.Controls.AddRange(new Control[] { lblInitialTitle, btnConnectDatabase, btnExitInitial, lblConnectionStatus });
         }        
-        private Label CreateInitialTitle() // Создание заголовка экрана подключения
+        private Label CreateInitialTitle() // создание заголовка экрана подключения
         {
             return new Label
             {
@@ -93,17 +93,17 @@ namespace PractiStudent
                 Size = UIStyles.InitialTitleSize
             };
         }        
-        private Button CreateConnectButton() // Создание кнопки подключения к бд
+        private Button CreateConnectButton() // создание кнопки подключения к бд
         {
             return CreateStyledButton("Подключиться к БД", UIStyles.ButtonConnectPosition,
                 UIStyles.PrimaryButton, BtnConnectDatabase_Click);
         }        
-        private Button CreateExitButton() // Создание кнопки выхода из приложения
+        private Button CreateExitButton() // создание кнопки выхода из приложения
         {
             return CreateStyledButton("Выйти из приложения", UIStyles.ButtonExitInitialPosition,
                 UIStyles.DangerButton, BtnExit_Click);
         }        
-        private Label CreateConnectionStatusLabel() // Метка статуса подключения
+        private Label CreateConnectionStatusLabel() // метка статуса подключения
         {
             return new Label
             {
@@ -116,7 +116,7 @@ namespace PractiStudent
                 Visible = false
             };
         }        
-        private void InitializeMainMenu() // Инициализация главного меню 
+        private void InitializeMainMenu() // инициализация главного меню 
         {
             lblTitle = CreateMainMenuTitle();
             btnRegisterGuest = CreateRegisterButton();
@@ -126,7 +126,7 @@ namespace PractiStudent
 
             this.Controls.AddRange(new Control[] { lblTitle, btnRegisterGuest, btnLoginGuest, btnLoginAdmin, btnExit });
         }        
-        private Label CreateMainMenuTitle() // Создание заголовка главного меню
+        private Label CreateMainMenuTitle() // создание заголовка главного меню
         {
             return new Label
             {
@@ -138,22 +138,22 @@ namespace PractiStudent
                 Size = new Size(345, 60)
             };
         }        
-        private Button CreateRegisterButton() // Создание кнопки регистрации гостя
+        private Button CreateRegisterButton() // создание кнопки регистрации гостя
         {
             return CreateStyledButton("Зарегистрироваться как гость", new Point(50, 120),
                 UIStyles.PrimaryButton, BtnRegisterGuest_Click);
         }        
-        private Button CreateLoginGuestButton() // Создание кнопки входа как гость
+        private Button CreateLoginGuestButton() // создание кнопки входа как гость
         {
             return CreateStyledButton("Войти как гость", new Point(50, 180),
                 UIStyles.PrimaryButton, (s, e) => ShowInputScreen(ModeLoginGuest));
         }        
-        private Button CreateLoginAdminButton() // Создание кнопки входа как администратор
+        private Button CreateLoginAdminButton() // создание кнопки входа как администратор
         {
             return CreateStyledButton("Войти как администратор", new Point(50, 240),
                 UIStyles.PrimaryButton, (s, e) => ShowInputScreen(ModeLoginAdmin));
         }        
-        private void InitializeInputPanel() // Инициализация панели ввода учётных данных
+        private void InitializeInputPanel() // инициализация панели ввода учётных данных
         {
             panelInputContainer = CreateInputPanel();
             lblFormActionTitle = CreateFormActionTitle();
@@ -166,7 +166,7 @@ namespace PractiStudent
             AddControlsToInputPanel();
             this.Controls.Add(panelInputContainer);
         }       
-        private Panel CreateInputPanel() // Создание контейнера для панели ввода
+        private Panel CreateInputPanel() // создание контейнера для панели ввода
         {
             return new Panel
             {
@@ -175,7 +175,7 @@ namespace PractiStudent
                 Visible = false
             };
         }        
-        private Label CreateFormActionTitle() // Создание заголовка панели действий
+        private Label CreateFormActionTitle() // создание заголовка панели действий
         {
             return new Label
             {
@@ -186,43 +186,43 @@ namespace PractiStudent
                 Size = new Size(345, 30)
             };
         }        
-        private TextBox CreateLoginTextBox() // Создание поля ввода логина
+        private TextBox CreateLoginTextBox() // создание поля ввода логина
         {
             Label lblLogin = new Label { Text = "Логин:", Font = UIStyles.LabelFont, Location = new Point(30, 55), Size = new Size(280, 15) };
             TextBox txtLogin = new TextBox { Font = UIStyles.InputFont, Location = new Point(30, 75), Size = UIStyles.InputSize };
             panelInputContainer.Controls.Add(lblLogin);
             return txtLogin;
         }        
-        private TextBox CreatePasswordTextBox() // Создание поля ввода пароля
+        private TextBox CreatePasswordTextBox() // создание поля ввода пароля
         {
             Label lblPassword = new Label { Text = "Пароль:", Font = UIStyles.LabelFont, Location = new Point(30, 115), Size = new Size(280, 15) };
             TextBox txtPassword = new TextBox { Font = UIStyles.InputFont, Location = new Point(30, 135), Size = UIStyles.InputSize, UseSystemPasswordChar = true };
             panelInputContainer.Controls.Add(lblPassword);
             return txtPassword;
         }       
-        private TextBox CreateConfirmPasswordTextBox()  // Создание поля подтверждения пароля
+        private TextBox CreateConfirmPasswordTextBox()  // создание поля подтверждения пароля
         {
             Label lblConfirmPassword = new Label { Name = "lblConfirmPassword", Text = "Повторите пароль:", Font = UIStyles.LabelFont, Location = new Point(30, 175), Size = new Size(280, 15) };
             TextBox txtConfirmPassword = new TextBox { Name = "txtConfirmPassword", Font = UIStyles.InputFont, Location = new Point(30, 195), Size = UIStyles.InputSize, UseSystemPasswordChar = true };
             panelInputContainer.Controls.Add(lblConfirmPassword);
             return txtConfirmPassword;
         }        
-        private Button CreateSubmitButton() // Создание кнопки подтверждения
+        private Button CreateSubmitButton() // создание кнопки подтверждения
         {
             return CreateStyledButton("Подтвердить", new Point(30, 250), UIStyles.SuccessButton, BtnSubmitAction_Click);
         }       
-        private Button CreateBackButton() // Создание кнопки возврата в меню
+        private Button CreateBackButton() // создание кнопки возврата в меню
         {
             return CreateStyledButton("Вернуться назад", new Point(30, 310), UIStyles.NeutralButton, (s, e) => ShowMainMenuScreen());
         }        
-        private void AddControlsToInputPanel() // Добавление всех элементов на панель ввода
+        private void AddControlsToInputPanel() // добавление всех элементов на панель ввода
         {
             panelInputContainer.Controls.AddRange(new Control[] {
                 lblFormActionTitle, txtLogin, txtPassword,
                 txtConfirmPassword, btnSubmitAction, btnBackToMenu
             });
         }        
-        private void ShowConnectionScreen() // Показ экрана подключения к БД
+        private void ShowConnectionScreen() // показ экрана подключения к БД
         {
             _isDatabaseConnected = false;
             HideAllControls();
@@ -230,7 +230,7 @@ namespace PractiStudent
             btnConnectDatabase.Visible = true;
             btnExitInitial.Visible = true;
         }        
-        private void ShowMainMenuScreen() // Показ главного меню авторизации
+        private void ShowMainMenuScreen() // показ главного меню авторизации
         {
             if (!_isDatabaseConnected) return;
 
@@ -243,7 +243,7 @@ namespace PractiStudent
             btnLoginAdmin.Visible = true;
             btnExit.Visible = true;
         }        
-        private void ShowInputScreen(string mode) // Показ экрана ввода учётных данных
+        private void ShowInputScreen(string mode) // показ экрана ввода учётных данных
         {
             if (!_isDatabaseConnected) return;
 
@@ -253,7 +253,7 @@ namespace PractiStudent
             ConfigureInputPanelForMode(mode);
             panelInputContainer.Visible = true;
         }        
-        private void HideAllControls() // Скрытие всех элементов управления
+        private void HideAllControls() // скрытие всех элементов управления
         {
             lblInitialTitle.Visible = false;
             btnConnectDatabase.Visible = false;
@@ -266,17 +266,17 @@ namespace PractiStudent
             btnExit.Visible = false;
             panelInputContainer.Visible = false;
         }        
-        private void UpdateConnectionStatus() // Обновление статуса подключения
+        private void UpdateConnectionStatus() // обновление статуса подключения
         {
             lblConnectionStatus.Text = $" Подключение: \"{_userService.GetDatabaseFileName()}\"";
         }        
-        private void ClearInputFields() // Очистка полей ввода
+        private void ClearInputFields() // очистка полей ввода
         {
             txtLogin.Clear();
             txtPassword.Clear();
             txtConfirmPassword.Clear();
         }        
-        private void ConfigureInputPanelForMode(string mode) // Настройка панели ввода для выбранного режима
+        private void ConfigureInputPanelForMode(string mode) // настройка панели ввода для выбранного режима
         {
             if (mode == ModeRegister)
             {
@@ -287,21 +287,21 @@ namespace PractiStudent
                 ConfigureForLogin(mode);
             }
         }        
-        private void ConfigureForRegistration() // Настройка панели для режима регистрации
+        private void ConfigureForRegistration() // настройка панели для режима регистрации
         {
             lblFormActionTitle.Text = "Регистрация гостя";
             panelInputContainer.Controls["lblConfirmPassword"].Visible = true;
             txtConfirmPassword.Visible = true;
             btnSubmitAction.Location = new Point(30, 250);
         }        
-        private void ConfigureForLogin(string mode) // Настройка панели для режима входа
+        private void ConfigureForLogin(string mode) // настройка панели для режима входа
         {
             lblFormActionTitle.Text = mode == ModeLoginAdmin ? "Вход для администратора" : "Вход в систему";
             panelInputContainer.Controls["lblConfirmPassword"].Visible = false;
             txtConfirmPassword.Visible = false;
             btnSubmitAction.Location = new Point(30, 185);
         }        
-        private void BtnConnectDatabase_Click(object sender, EventArgs e) // Обработчик кнопки подключения к БД
+        private void BtnConnectDatabase_Click(object sender, EventArgs e) // обработчик кнопки подключения к БД
         {
             string selectedFilePath = ShowDatabaseSelectionDialog();
 
@@ -317,7 +317,7 @@ namespace PractiStudent
                 ShowConnectionError();
             }
         }        
-        private string ShowDatabaseSelectionDialog() // Показ диалога выбора файла БД
+        private string ShowDatabaseSelectionDialog() // показ диалога выбора файла БД
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
@@ -332,7 +332,7 @@ namespace PractiStudent
                 return null;
             }
         }        
-        private void ShowConnectionError() // Показ сообщения об ошибке подключения
+        private void ShowConnectionError() // показ сообщения об ошибке подключения
         {
             ErrorHandler.ShowWarning(
                 "Не удалось подключиться к базе данных.\n\n" +
@@ -341,15 +341,15 @@ namespace PractiStudent
                 "2. Файл содержит таблицу \"Пользователи\"\n" +
                 "3. Файл не поврежден и не защищен паролем");
         }        
-        private void BtnRegisterGuest_Click(object sender, EventArgs e) // Обработчик кнопки регистрации гостя
+        private void BtnRegisterGuest_Click(object sender, EventArgs e) // обработчик кнопки регистрации гостя
         {
             ShowInputScreen(ModeRegister);
         }        
-        private void BtnExit_Click(object sender, EventArgs e) // Обработчик кнопки выхода из приложения
+        private void BtnExit_Click(object sender, EventArgs e) // обработчик кнопки выхода из приложения
         {
             Application.Exit();
         }       
-        private void PerformLogin(string role, string login, string password)  // Авторизация пользователя с проверкой учётных данных
+        private void PerformLogin(string role, string login, string password)  // авторизация пользователя с проверкой учётных данных
         {
             try
             {
@@ -370,18 +370,21 @@ namespace PractiStudent
                 ErrorHandler.Handle(ex, $"Login as {role}");
             }
         }        
-        private void ShowLoginSuccess(string role) // Показ сообщения об успешном входе
+        private void ShowLoginSuccess(string role) // показ сообщения об успешном входе
         {
             ErrorHandler.ShowInfo($"Вы успешно вошли как {role.ToLower()}!");
         }        
-        private void OpenMainForm(string userRole) // Открытие главной формы
+        private void OpenMainForm(string userRole) // открытие главной формы
         {
             this.Hide();
             FormMain mainForm = new FormMain(userRole, null, _userService.GetDatabaseFileName(), _userService);
             mainForm.ShowDialog();
             ForceCleanupComResources();
-            this.Show();
-        }
+            if (!this.IsDisposed && !Environment.HasShutdownStarted)
+            {
+                this.Show();
+            }
+        }        
         private void ForceCleanupComResources()
         {
             try
@@ -428,7 +431,7 @@ namespace PractiStudent
                 PerformLogin("Администратор", login, password);
             }
         }        
-        private void RegisterNewGuest(string login, string password) // Регистрация нового гостя
+        private void RegisterNewGuest(string login, string password) // регистрация нового гостя
         {
             try
             {
