@@ -654,7 +654,7 @@ namespace PractiStudent
         {
             LoadTableData();
         }
-        private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd)
+        private void CreateDynamicForm(Panel panel, DataGridViewRow row, bool isAdd) // создаёт форму для добавления или редактирования на основе структуры выбранной таблицы
         {
             panel.Controls.Clear();
             List<string> columns = _dbHelper.GetColumnNames(_currentTableName);
@@ -717,7 +717,7 @@ namespace PractiStudent
                 CreateRegularField(context);
             }
         }
-        private void CreateReadOnlyRoleField(FieldContext context)
+        private void CreateReadOnlyRoleField(FieldContext context) // создаёт недоступное для ред-я поле роли
         {
             TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
             txt.Name = "txt_" + context.ColumnName;
@@ -736,7 +736,7 @@ namespace PractiStudent
             context.TextBoxes[context.ColumnName] = txt;
             context.Panel.Controls.Add(txt);
         }
-        private void CreateAutoNumberField(FieldContext context)
+        private void CreateAutoNumberField(FieldContext context) //  создаёт недоступное для ред-я текстовое поле для полей счётчиков
         {
             TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
             txt.Name = "txt_" + context.ColumnName;
@@ -756,7 +756,7 @@ namespace PractiStudent
             context.TextBoxes[context.ColumnName] = txt;
             context.Panel.Controls.Add(txt);
         }
-        private void CreateForeignKeyField(FieldContext context)
+        private void CreateForeignKeyField(FieldContext context) // создаёт поле для внешних ключей вместе с названием
         {
             ComboBox cmb = PanelBuilder.CreateComboBox(new Point(0, context.CurrentY));
             cmb.Name = "cmb_" + context.ColumnName;
@@ -812,7 +812,7 @@ namespace PractiStudent
                 cmb.SelectedIndex = 0;
             }
         }
-        private void CreateRegularField(FieldContext context)
+        private void CreateRegularField(FieldContext context) // создаёт textbox
         {
             TextBox txt = PanelBuilder.CreateTextBox(new Point(0, context.CurrentY));
             txt.Name = "txt_" + context.ColumnName;
@@ -949,7 +949,7 @@ namespace PractiStudent
             _tableOps.UpdateRecord(_currentTableName, values, _primaryKeyColumn, keyValue, _primaryKeyColumn);
             ErrorHandler.ShowInfo("Запись успешно обновлена!");
         }
-        private void BtnDoDelete_Click(object sender, EventArgs e)
+        private void BtnDoDelete_Click(object sender, EventArgs e) // обработчик кнопки удаления
         {
             if (dataGridViewMain.CurrentRow == null)
             {

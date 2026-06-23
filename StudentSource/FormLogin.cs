@@ -385,7 +385,7 @@ namespace PractiStudent
                 this.Show();
             }
         }        
-        private void ForceCleanupComResources()
+        private void ForceCleanupComResources() // метод принудительного очищения COM ресурсов
         {
             try
             {
@@ -396,11 +396,12 @@ namespace PractiStudent
             }
             catch { }
         }
-        private void ShowLoginError(string role) // Показ сообщения об ошибке входа
+        private void ShowLoginError(string role) // показ сообщения об ошибке входа
         {
             ErrorHandler.ShowWarning($"Неверный логин или пароль для {role.ToLower()}!");
-        }       
-        private void BtnSubmitAction_Click(object sender, EventArgs e)  // Обработчик кнопки подтверждения действий
+        }
+
+        private void BtnSubmitAction_Click(object sender, EventArgs e)  // обработчик кнопки подтверждения действий
         {
             string login = txtLogin.Text.Trim();
             string password = txtPassword.Text.Trim();
@@ -416,7 +417,7 @@ namespace PractiStudent
 
             ProcessAction(login, password);
         }       
-        private void ProcessAction(string login, string password)  // Обработка выбранного действия
+        private void ProcessAction(string login, string password)  // обработка выбранного действия
         {
             if (currentMode == ModeRegister)
             {
